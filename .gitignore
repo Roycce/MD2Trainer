@@ -45,3 +45,4 @@ venv.bak/
 
 # Temporary scratch logs
 *.log
+*.zip

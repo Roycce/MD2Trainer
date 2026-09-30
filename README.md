@@ -1,4 +1,4 @@
-# Minecraft Dungeons II - Standalone Native Trainer
+# Minecraft Dungeons II - Standalone Native Trainer v1.0.1
 
 A lightweight, standalone native GUI trainer for Minecraft Dungeons II (`Dungeons-WinGDK-Shipping.exe`), designed for offline singleplayer use. It accesses game memory directly via Win32 Virtual Memory APIs without attaching debuggers, injecting DLLs, or triggering anti-tamper termination.
 
@@ -6,10 +6,10 @@ A lightweight, standalone native GUI trainer for Minecraft Dungeons II (`Dungeon
 
 ## Features
 
-- **Currencies**: Adjust Emeralds, Echo Shards, and Enchantment Points with custom balances or maximum caps; freeze Souls value.
-- **Combat**: God Mode toggle (continuous health, shield, and invincibility lock), instant cooldowns for artifacts and potions, guaranteed critical hits, and multishot.
-- **Movement**: Movement speed multiplier with combat-lock (prevents attack animation resets), custom jump height, gravity scale, instant roll, and time dilation.
-- **Ammo**: Custom arrow ammo count, auto-refill toggle for infinite arrows, quiver refill speed multiplier, and rapid fire.
+- **Currencies**: Adjust Emeralds, Echo Shards, and Enchantment Points with custom balances or maximum caps; freeze Souls value; Currency Gain Multipliers (2x, 3x, 5x, 10x, and custom Nx for Emeralds and Souls).
+- **Combat**: God Mode toggle (continuous health, shield, and invincibility lock), Infinite Potions toggle & instant potion cooldown (safe non-blocking recharge with full charges), fast artifact cooldown, guaranteed critical hits, and multishot.
+- **Movement**: Movement speed multiplier with combat-lock (prevents attack animation resets), custom jump height, gravity scale, Infinite Roll toggle & instant roll cooldown (recharges charges cleanly), and time dilation.
+- **Ammo**: Custom arrow ammo count, auto-refill toggle for infinite arrows, and rapid fire.
 - **Progression & Loot**: Master loot multipliers (2x, 3x, 5x, 10x, and custom Nx), drop duplication, uncapped loot payout ceiling, 100% rare/unique drop rate, character level adjustments, and one-click vendor upgrades.
 
 ---

@@ -54,14 +54,18 @@ CHAINS = {
     "ammo_base":            ['B8', '18', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
     "ammo_max_cur":         ['CC', '18', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
     "ammo_max_base":        ['C8', '18', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "ammo_recharge_mult_cur":  ['1BC', '18', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "ammo_recharge_mult_base": ['1B8', '18', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "ammo_recharge_time_cur":  ['1AC', '18', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "ammo_recharge_time_base": ['1A8', '18', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "ammo_recharge_delay_cur": ['1CC', '18', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "ammo_recharge_delay_base":['1C8', '18', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
     "rapid_fire_cur":       ['9C', '18', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
     "rapid_fire_base":      ['98', '18', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
+
+    # Currency Gain Multipliers (AttrSet [12] = ATR_Currency at 0x60, AttrSet [11] = ATR_Soul at 0x58)
+    "emerald_increase_cur":    ['CC', '60', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
+    "emerald_increase_base":   ['C8', '60', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
+    "emerald_max_add_cur":     ['EC', '60', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
+    "emerald_max_add_base":    ['E8', '60', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
+    "emerald_drop_chance_cur": ['DC', '60', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
+    "emerald_drop_chance_base":['D8', '60', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
+    "soul_gather_cur":         ['DC', '58', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
+    "soul_gather_base":        ['D8', '58', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
 
     # Level & Progression (AttrSet [13] = ATR_XP at 0x68)
     "level":                ['BC', '68', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
@@ -69,30 +73,43 @@ CHAINS = {
     "xp_needed":            ['AC', '68', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
 
     # Survival & Combat (AttrSet [8] = ATR_Health at 0x40, AttrSet [0] = ATR_Resistance at 0x0)
-    "health_current":   ['9C', '40', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "health_max":       ['BC', '40', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "shield_current":   ['16C', '0', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "shield_max":       ['18C', '0', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "damage_resist":    ['9C', '0', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "actor_invincible": ['5A', '2F8', '30', '0', '38', '1248'],
-    "artifact_cd":      ['9C', '20', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "potion_cd":        ['13C', '40', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "crit_chance":      ['21C', '38', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "crit_multiplier":  ['24C', '38', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "melee_dmg_mult":   ['1BC', '38', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "ranged_dmg_mult":  ['1CC', '38', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "melee_speed":      ['9C', '10', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "melee_reach":      ['AC', '10', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "multishot_chance": ['13C', '18', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "multishot_count":  ['14C', '18', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
+    "health_current":          ['9C', '40', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
+    "health_max":              ['BC', '40', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
+    "shield_current":          ['16C', '0', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
+    "shield_max":              ['18C', '0', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
+    "damage_resist":           ['9C', '0', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
+    "actor_invincible":        ['5A', '2F8', '30', '0', '38', '1248'],
+    "artifact_cd":             ['9C', '20', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
+    "artifact_cd_base":        ['98', '20', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
+    "potion_cd":               ['13C', '40', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
+    "potion_cd_base":          ['138', '40', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
+    "potion_base_cd_cur":      ['12C', '40', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
+    "potion_base_cd_base":     ['128', '40', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
+    "potion_charges_cur":      ['16C', '40', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
+    "potion_charges_base":     ['168', '40', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
+    "potion_max_charges_cur":  ['17C', '40', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
+    "potion_max_charges_base": ['178', '40', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
+    "crit_chance":             ['21C', '38', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
+    "crit_multiplier":         ['24C', '38', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
+    "melee_dmg_mult":          ['1BC', '38', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
+    "ranged_dmg_mult":         ['1CC', '38', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
+    "melee_speed":             ['9C', '10', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
+    "melee_reach":             ['AC', '10', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
+    "multishot_chance":        ['13C', '18', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
+    "multishot_count":         ['14C', '18', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
 
     # Movement & Physics (AttrSet [1] = ATR_Movement at 0x8)
-    "move_mult_cur":    ['AC', '8', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "move_mult_base":   ['A8', '8', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "jump_velocity":    ['1A8', '330', '2F8', '30', '0', '38', '1248'],
-    "gravity":          ['1A0', '330', '2F8', '30', '0', '38', '1248'],
-    "roll_cd":          ['12C', '8', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "time_dilation":    ['68', '2F8', '30', '0', '38', '1248'],
+    "move_mult_cur":           ['AC', '8', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
+    "move_mult_base":          ['A8', '8', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
+    "jump_velocity":           ['1A8', '330', '2F8', '30', '0', '38', '1248'],
+    "gravity":                 ['1A0', '330', '2F8', '30', '0', '38', '1248'],
+    "roll_cd":                 ['12C', '8', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
+    "roll_cd_base":            ['128', '8', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
+    "roll_charges_cur":        ['14C', '8', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
+    "roll_charges_base":       ['148', '8', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
+    "roll_max_charges_cur":    ['15C', '8', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
+    "roll_max_charges_base":   ['158', '8', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
+    "time_dilation":           ['68', '2F8', '30', '0', '38', '1248'],
 
     # Loot & Vendors (AttrSet [16] = ATR_Loot at 0x80, AttrSet [9] = ATR_MerchantInfo at 0x48)
     "loot_multiplier":  ['9C', '80', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
@@ -209,9 +226,9 @@ class MemoryManager:
 class TrainerApp(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("Minecraft Dungeons II - Native Trainer")
-        self.geometry("880x700")
-        self.minsize(820, 620)
+        self.title("Minecraft Dungeons II - Native Trainer v1.0.1")
+        self.geometry("880x730")
+        self.minsize(820, 650)
         self.configure(bg="#181825")
 
         self.mem = MemoryManager()
@@ -220,6 +237,8 @@ class TrainerApp(tk.Tk):
         self.auto_refill_ammo_active = False
         self.lock_speed_active = False
         self.locked_speed_val = 1.0
+        self.infinite_potions_active = False
+        self.infinite_roll_active = False
 
         self.setup_styles()
         self.create_widgets()
@@ -247,7 +266,7 @@ class TrainerApp(tk.Tk):
         top_bar = tk.Frame(self, bg="#181825", padx=16, pady=10)
         top_bar.pack(fill='x')
 
-        title_lbl = tk.Label(top_bar, text="MINECRAFT DUNGEONS II - NATIVE TRAINER", font=('Segoe UI', 13, 'bold'), bg="#181825", fg="#89b4fa")
+        title_lbl = tk.Label(top_bar, text="MINECRAFT DUNGEONS II - NATIVE TRAINER v1.0.1", font=('Segoe UI', 13, 'bold'), bg="#181825", fg="#89b4fa")
         title_lbl.pack(side='left')
 
         self.status_lbl = tk.Label(top_bar, text="Searching for game process...", font=('Segoe UI', 9, 'bold'), bg="#181825", fg="#f38ba8")
@@ -307,15 +326,24 @@ class TrainerApp(tk.Tk):
                                       ("Set 99 Points", lambda: self.set_ench_points(99))],
                                      custom_entry=True, setter=self.set_ench_points)
 
+        # Currency Gain Multiplier (Emeralds & Soul Gathering Scale)
+        self.lbl_curr_mult = self.add_row(f, 3, "Currency Gain Multiplier:", "emerald_increase_cur",
+                                          [("2x Gain", lambda: self.set_currency_gain(2.0)),
+                                           ("3x Gain", lambda: self.set_currency_gain(3.0)),
+                                           ("5x Gain", lambda: self.set_currency_gain(5.0)),
+                                           ("10x Gain", lambda: self.set_currency_gain(10.0)),
+                                           ("Reset (1x)", lambda: self.set_currency_gain(1.0))],
+                                          custom_entry=True, setter=self.set_currency_gain)
+
         # Souls (with dedicated Freeze Souls toggle)
-        self.lbl_souls = self.add_row(f, 3, "Souls (Soul Energy):", "souls_current",
+        self.lbl_souls = self.add_row(f, 4, "Souls (Soul Energy):", "souls_current",
                                       [("+500", lambda: self.adjust_souls(500)),
                                        ("Max (99,999)", lambda: self.set_souls(99999))],
                                       custom_entry=True, setter=self.set_souls)
 
         # Freeze Souls Toggle Row
         freeze_frame = tk.Frame(f, bg="#1e1e2e", pady=2)
-        freeze_frame.grid(row=4, column=0, columnspan=5, sticky='w')
+        freeze_frame.grid(row=5, column=0, columnspan=5, sticky='w')
         self.btn_freeze_souls = tk.Button(freeze_frame, text="FREEZE SOULS (OFF)", font=('Segoe UI', 9, 'bold'),
                                           bg="#313244", fg="#f38ba8", padx=12, pady=4, relief='flat',
                                           command=self.toggle_freeze_souls)
@@ -325,14 +353,14 @@ class TrainerApp(tk.Tk):
         lbl_souls_hint.pack(side='left', padx=10)
 
         # Arrows (Ammo) - Custom amount, respects lower values, auto-refill toggle
-        self.lbl_ammo = self.add_row(f, 5, "Arrows (Ammo Count):", "ammo_current",
+        self.lbl_ammo = self.add_row(f, 6, "Arrows (Ammo Count):", "ammo_current",
                                      [("Refill (999)", lambda: self.set_ammo(999)),
                                       ("Max Cap (999)", self.max_ammo_cap)],
                                      custom_entry=True, setter=self.set_ammo)
 
         # Auto-Refill (Infinite Ammo) Toggle Row
         refill_frame = tk.Frame(f, bg="#1e1e2e", pady=2)
-        refill_frame.grid(row=6, column=0, columnspan=5, sticky='w')
+        refill_frame.grid(row=7, column=0, columnspan=5, sticky='w')
         self.btn_auto_refill = tk.Button(refill_frame, text="AUTO-REFILL ARROWS (OFF)", font=('Segoe UI', 9, 'bold'),
                                          bg="#313244", fg="#f38ba8", padx=12, pady=4, relief='flat',
                                          command=self.toggle_auto_refill)
@@ -340,13 +368,6 @@ class TrainerApp(tk.Tk):
         lbl_refill_hint = tk.Label(refill_frame, text="Infinite Arrows: Keeps ammo topped to max every game tick",
                                    bg="#1e1e2e", fg="#a6adc8", font=('Segoe UI', 8))
         lbl_refill_hint.pack(side='left', padx=10)
-
-        # Arrow Refill Speed & Recharge Delay (Native Quivers)
-        self.lbl_recharge = self.add_row(f, 7, "Quiver Refill Speed:", "ammo_recharge_mult_cur",
-                                         [("Fast (5x)", lambda: self.set_refill_speed(5.0)),
-                                          ("Instant (0s CD)", lambda: self.set_refill_speed(20.0)),
-                                          ("Reset (1x)", lambda: self.set_refill_speed(1.0))],
-                                         custom_entry=True, setter=self.set_refill_speed)
 
         # Rapid Fire (Bow Attack Speed)
         self.lbl_rapid = self.add_row(f, 8, "Rapid Fire (Bow Speed):", "rapid_fire_cur",
@@ -365,6 +386,29 @@ class TrainerApp(tk.Tk):
     def adjust_emeralds(self, delta):
         cur = self.mem.read_float("emeralds_current") or 0.0
         self.set_emeralds(cur + delta)
+
+    def set_currency_gain(self, mult):
+        mult = float(mult)
+        if mult <= 1.0:
+            self.mem.write_float("emerald_increase_base", 0.0)
+            self.mem.write_float("emerald_increase_cur", 0.0)
+            self.mem.write_float("emerald_max_add_base", 1.0)
+            self.mem.write_float("emerald_max_add_cur", 1.0)
+            self.mem.write_float("emerald_drop_chance_base", 0.0)
+            self.mem.write_float("emerald_drop_chance_cur", 0.0)
+            self.mem.write_float("soul_gather_base", 1.0)
+            self.mem.write_float("soul_gather_cur", 1.0)
+        else:
+            pct = mult - 1.0
+            max_add = max(1.0, mult * 5.0)
+            self.mem.write_float("emerald_increase_base", pct)
+            self.mem.write_float("emerald_increase_cur", pct)
+            self.mem.write_float("emerald_max_add_base", max_add)
+            self.mem.write_float("emerald_max_add_cur", max_add)
+            self.mem.write_float("emerald_drop_chance_base", mult)
+            self.mem.write_float("emerald_drop_chance_cur", mult)
+            self.mem.write_float("soul_gather_base", mult)
+            self.mem.write_float("soul_gather_cur", mult)
 
     def set_springstone(self, val):
         val = float(val)
@@ -447,21 +491,6 @@ class TrainerApp(tk.Tk):
         self.mem.write_float("ammo_base", m)
         self.mem.write_float("ammo_current", m)
 
-    def set_refill_speed(self, mult):
-        mult = float(mult)
-        self.mem.write_float("ammo_recharge_mult_base", mult)
-        self.mem.write_float("ammo_recharge_mult_cur", mult)
-        if mult >= 5.0:
-            self.mem.write_float("ammo_recharge_delay_base", 0.0)
-            self.mem.write_float("ammo_recharge_delay_cur", 0.0)
-            self.mem.write_float("ammo_recharge_time_base", 0.05)
-            self.mem.write_float("ammo_recharge_time_cur", 0.05)
-        elif mult == 1.0:
-            self.mem.write_float("ammo_recharge_delay_base", 4.0)
-            self.mem.write_float("ammo_recharge_delay_cur", 4.0)
-            self.mem.write_float("ammo_recharge_time_base", 0.75)
-            self.mem.write_float("ammo_recharge_time_cur", 0.75)
-
     def set_rapid_fire(self, spd):
         spd = float(spd)
         self.mem.write_float("rapid_fire_base", spd)
@@ -494,32 +523,100 @@ class TrainerApp(tk.Tk):
                                        [("Set 1,000 Shield", lambda: self.mem.write_float("shield_current", 1000))],
                                        custom_entry=True, setter=lambda v: self.mem.write_float("shield_current", v))
 
-        self.lbl_art_cd = self.add_row(f, 3, "Artifact Cooldown (0=Instant):", "artifact_cd",
-                                       [("Instant (0.0)", lambda: self.mem.write_float("artifact_cd", 0.0)),
-                                        ("Reset (1.0)", lambda: self.mem.write_float("artifact_cd", 1.0))])
+        self.lbl_art_cd = self.add_row(f, 3, "Artifact Cooldown:", "artifact_cd",
+                                       [("Fast (0.05x)", self.set_instant_artifact),
+                                        ("Reset (1.0x)", self.reset_artifact_cd)])
 
-        self.lbl_pot_cd = self.add_row(f, 4, "Potion Cooldown (0=Instant):", "potion_cd",
-                                       [("Instant (0.0)", lambda: self.mem.write_float("potion_cd", 0.0)),
-                                        ("Reset (1.0)", lambda: self.mem.write_float("potion_cd", 1.0))])
+        self.lbl_pot_cd = self.add_row(f, 4, "Potion Cooldown:", "potion_base_cd_cur",
+                                       [("Instant (0.1s)", self.set_instant_potion),
+                                        ("Reset (30s)", self.reset_potion)],
+                                       custom_entry=True, setter=self.set_potion_cd)
 
-        self.lbl_crit = self.add_row(f, 5, "Critical Hit Chance (1.0=100%):", "crit_chance",
+        # Infinite Potions Toggle Row
+        pot_frame = tk.Frame(f, bg="#1e1e2e", pady=2)
+        pot_frame.grid(row=5, column=0, columnspan=5, sticky='w')
+        self.btn_infinite_potions = tk.Button(pot_frame, text="INFINITE POTIONS (OFF)", font=('Segoe UI', 9, 'bold'),
+                                              bg="#313244", fg="#f38ba8", padx=12, pady=4, relief='flat',
+                                              command=self.toggle_infinite_potions)
+        self.btn_infinite_potions.pack(side='left')
+        lbl_pot_hint = tk.Label(pot_frame, text="Infinite Potions: Locks potion charges to 5 and auto-recharges instantly",
+                                bg="#1e1e2e", fg="#a6adc8", font=('Segoe UI', 8))
+        lbl_pot_hint.pack(side='left', padx=10)
+
+        self.lbl_crit = self.add_row(f, 6, "Critical Hit Chance (1.0=100%):", "crit_chance",
                                      [("100% Crit", lambda: self.mem.write_float("crit_chance", 1.0)),
                                       ("500% Crit Dmg", lambda: self.mem.write_float("crit_multiplier", 5.0))],
                                      custom_entry=True, setter=lambda v: self.mem.write_float("crit_chance", v))
 
-        self.lbl_melee_spd = self.add_row(f, 6, "Melee Attack Speed:", "melee_speed",
+        self.lbl_melee_spd = self.add_row(f, 7, "Melee Attack Speed:", "melee_speed",
                                           [("2x Speed", lambda: self.mem.write_float("melee_speed", 2.0)),
                                            ("5x Speed", lambda: self.mem.write_float("melee_speed", 5.0)),
                                            ("Reset", lambda: self.mem.write_float("melee_speed", 1.0))],
                                           custom_entry=True, setter=lambda v: self.mem.write_float("melee_speed", v))
 
-        self.lbl_reach = self.add_row(f, 7, "Melee Reach / Range:", "melee_reach",
+        self.lbl_reach = self.add_row(f, 8, "Melee Reach / Range:", "melee_reach",
                                       [("Super (2500)", lambda: self.mem.write_float("melee_reach", 2500.0)),
                                        ("Reset (250)", lambda: self.mem.write_float("melee_reach", 250.0))],
                                       custom_entry=True, setter=lambda v: self.mem.write_float("melee_reach", v))
 
-        self.lbl_multi = self.add_row(f, 8, "MultiShot (Chance & Arrows):", "multishot_chance",
+        self.lbl_multi = self.add_row(f, 9, "MultiShot (Chance & Arrows):", "multishot_chance",
                                       [("100% + 5 Arrows", self.enable_multishot)])
+
+    def set_instant_artifact(self):
+        self.mem.write_float("artifact_cd_base", 0.05)
+        self.mem.write_float("artifact_cd", 0.05)
+
+    def reset_artifact_cd(self):
+        self.mem.write_float("artifact_cd_base", 1.0)
+        self.mem.write_float("artifact_cd", 1.0)
+
+    def set_potion_cd(self, val):
+        val = float(val)
+        val = max(0.05, val)
+        self.mem.write_float("potion_base_cd_base", val)
+        self.mem.write_float("potion_base_cd_cur", val)
+        self.mem.write_float("potion_cd_base", 1.0)
+        self.mem.write_float("potion_cd", 1.0)
+        self.mem.write_float("potion_max_charges_base", 5.0)
+        self.mem.write_float("potion_max_charges_cur", 5.0)
+        self.mem.write_float("potion_charges_base", 5.0)
+        self.mem.write_float("potion_charges_cur", 5.0)
+
+    def set_instant_potion(self):
+        # 0.1s base cd and 0.05 multiplier = 5ms duration, safely triggering UE4 timer delegate
+        self.mem.write_float("potion_base_cd_base", 0.1)
+        self.mem.write_float("potion_base_cd_cur", 0.1)
+        self.mem.write_float("potion_cd_base", 0.05)
+        self.mem.write_float("potion_cd", 0.05)
+        self.mem.write_float("potion_max_charges_base", 5.0)
+        self.mem.write_float("potion_max_charges_cur", 5.0)
+        self.mem.write_float("potion_charges_base", 5.0)
+        self.mem.write_float("potion_charges_cur", 5.0)
+
+    def reset_potion(self):
+        self.mem.write_float("potion_base_cd_base", 30.0)
+        self.mem.write_float("potion_base_cd_cur", 30.0)
+        self.mem.write_float("potion_cd_base", 1.0)
+        self.mem.write_float("potion_cd", 1.0)
+        self.mem.write_float("potion_max_charges_base", 1.0)
+        self.mem.write_float("potion_max_charges_cur", 1.0)
+        self.mem.write_float("potion_charges_base", 1.0)
+        self.mem.write_float("potion_charges_cur", 1.0)
+
+    def toggle_infinite_potions(self):
+        self.infinite_potions_active = not self.infinite_potions_active
+        if self.infinite_potions_active:
+            self.btn_infinite_potions.config(text="INFINITE POTIONS: ON", bg="#a6e3a1", fg="#11111b")
+            self.set_instant_potion()
+            self.apply_infinite_potions()
+        else:
+            self.btn_infinite_potions.config(text="INFINITE POTIONS (OFF)", bg="#313244", fg="#f38ba8")
+
+    def apply_infinite_potions(self):
+        self.mem.write_float("potion_max_charges_base", 5.0)
+        self.mem.write_float("potion_max_charges_cur", 5.0)
+        self.mem.write_float("potion_charges_base", 5.0)
+        self.mem.write_float("potion_charges_cur", 5.0)
 
     def toggle_god_mode(self):
         self.god_mode_active = not self.god_mode_active
@@ -590,17 +687,70 @@ class TrainerApp(tk.Tk):
                                      custom_entry=True, setter=lambda v: self.mem.write_float("gravity", v))
 
         # Roll Cooldown
-        self.lbl_roll = self.add_row(f, 4, "Roll Cooldown (Default: 2.5s):", "roll_cd",
-                                     [("Instant Roll (0s)", lambda: self.mem.write_float("roll_cd", 0.0)),
-                                      ("Reset (2.5s)", lambda: self.mem.write_float("roll_cd", 2.5))],
-                                     custom_entry=True, setter=lambda v: self.mem.write_float("roll_cd", v))
+        self.lbl_roll = self.add_row(f, 4, "Roll Cooldown:", "roll_cd",
+                                     [("Instant Roll (0.1s)", self.set_instant_roll),
+                                      ("Reset (2.5s)", self.reset_roll)],
+                                     custom_entry=True, setter=self.set_roll_cd)
+
+        # Infinite Roll Toggle Row
+        roll_frame = tk.Frame(f, bg="#1e1e2e", pady=2)
+        roll_frame.grid(row=5, column=0, columnspan=5, sticky='w')
+        self.btn_infinite_roll = tk.Button(roll_frame, text="INFINITE ROLL (OFF)", font=('Segoe UI', 9, 'bold'),
+                                           bg="#313244", fg="#f38ba8", padx=12, pady=4, relief='flat',
+                                           command=self.toggle_infinite_roll)
+        self.btn_infinite_roll.pack(side='left')
+        lbl_roll_hint = tk.Label(roll_frame, text="Infinite Roll: Continually keeps roll charges at 5 for nonstop tumbling",
+                                 bg="#1e1e2e", fg="#a6adc8", font=('Segoe UI', 8))
+        lbl_roll_hint.pack(side='left', padx=10)
 
         # Time Dilation (Player Speedhack)
-        self.lbl_time = self.add_row(f, 5, "Time Dilation (Game Speed):", "time_dilation",
+        self.lbl_time = self.add_row(f, 6, "Time Dilation (Game Speed):", "time_dilation",
                                      [("1.25x", lambda: self.mem.write_float("time_dilation", 1.25)),
                                       ("1.5x", lambda: self.mem.write_float("time_dilation", 1.5)),
                                       ("Reset (1.0)", lambda: self.mem.write_float("time_dilation", 1.0))],
                                      custom_entry=True, setter=lambda v: self.mem.write_float("time_dilation", v))
+
+    def set_roll_cd(self, val):
+        val = float(val)
+        val = max(0.05, val)
+        self.mem.write_float("roll_cd_base", val)
+        self.mem.write_float("roll_cd", val)
+        self.mem.write_float("roll_max_charges_base", 5.0)
+        self.mem.write_float("roll_max_charges_cur", 5.0)
+        self.mem.write_float("roll_charges_base", 5.0)
+        self.mem.write_float("roll_charges_cur", 5.0)
+
+    def set_instant_roll(self):
+        # 0.1s cooldown completes in 1-2 frames without getting stuck, and provides 5 charges
+        self.mem.write_float("roll_cd_base", 0.1)
+        self.mem.write_float("roll_cd", 0.1)
+        self.mem.write_float("roll_max_charges_base", 5.0)
+        self.mem.write_float("roll_max_charges_cur", 5.0)
+        self.mem.write_float("roll_charges_base", 5.0)
+        self.mem.write_float("roll_charges_cur", 5.0)
+
+    def reset_roll(self):
+        self.mem.write_float("roll_cd_base", 2.5)
+        self.mem.write_float("roll_cd", 2.5)
+        self.mem.write_float("roll_max_charges_base", 1.0)
+        self.mem.write_float("roll_max_charges_cur", 1.0)
+        self.mem.write_float("roll_charges_base", 1.0)
+        self.mem.write_float("roll_charges_cur", 1.0)
+
+    def toggle_infinite_roll(self):
+        self.infinite_roll_active = not self.infinite_roll_active
+        if self.infinite_roll_active:
+            self.btn_infinite_roll.config(text="INFINITE ROLL: ON", bg="#a6e3a1", fg="#11111b")
+            self.set_instant_roll()
+            self.apply_infinite_roll()
+        else:
+            self.btn_infinite_roll.config(text="INFINITE ROLL (OFF)", bg="#313244", fg="#f38ba8")
+
+    def apply_infinite_roll(self):
+        self.mem.write_float("roll_max_charges_base", 5.0)
+        self.mem.write_float("roll_max_charges_cur", 5.0)
+        self.mem.write_float("roll_charges_base", 5.0)
+        self.mem.write_float("roll_charges_cur", 5.0)
 
     def set_speed(self, val):
         val = float(val)
@@ -828,8 +978,16 @@ class TrainerApp(tk.Tk):
             if self.lock_speed_active:
                 self.apply_lock_speed()
 
+            # Infinite Potions continuous lock
+            if self.infinite_potions_active:
+                self.apply_infinite_potions()
+
+            # Infinite Roll continuous lock
+            if self.infinite_roll_active:
+                self.apply_infinite_roll()
+
             for tab_rows in [
-                [self.lbl_emeralds, self.lbl_springstone, self.lbl_ench, self.lbl_souls, self.lbl_ammo, self.lbl_recharge, self.lbl_rapid],
+                [self.lbl_emeralds, self.lbl_springstone, self.lbl_ench, self.lbl_curr_mult, self.lbl_souls, self.lbl_ammo, self.lbl_rapid],
                 [self.lbl_health, self.lbl_shield, self.lbl_art_cd, self.lbl_pot_cd, self.lbl_crit, self.lbl_melee_spd, self.lbl_reach, self.lbl_multi],
                 [self.lbl_move_mult, self.lbl_jump, self.lbl_grav, self.lbl_roll, self.lbl_time],
                 [self.lbl_master_loot, self.lbl_dup, self.lbl_max_payouts, self.lbl_loot, self.lbl_rarity, self.lbl_level, self.lbl_xp, self.lbl_vendor],
@@ -843,7 +1001,13 @@ class TrainerApp(tk.Tk):
                     else:
                         v = self.mem.read_float(key)
                         if v is not None:
-                            lbl.config(text=f"{v:,.1f}" if abs(v) >= 10 else f"{v:.2f}")
+                            if key == "emerald_increase_cur":
+                                mult_disp = v + 1.0
+                                lbl.config(text=f"{mult_disp:.1f}x")
+                            elif abs(v) >= 10:
+                                lbl.config(text=f"{v:,.1f}")
+                            else:
+                                lbl.config(text=f"{v:.2f}")
                         else:
                             lbl.config(text="---")
 
