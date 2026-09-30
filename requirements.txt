@@ -1,0 +1,8 @@
+# Minecraft Dungeons II - Standalone Native Trainer
+# Zero external dependencies required.
+# Uses Python Standard Library only:
+# - tkinter / ttk (GUI interface, included with Python for Windows)
+# - ctypes / wintypes (Direct Win32 API memory operations)
+# - struct, sys, time
+#
+# Requires: Python 3.10 or newer (ensure Tcl/Tk is included during Python installation)
