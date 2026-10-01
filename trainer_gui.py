@@ -1,433 +1,23 @@
 #!/usr/bin/env python3
 """
-MINECRAFT DUNGEONS II - STANDALONE NATIVE TRAINER v1.0.3
+MINECRAFT DUNGEONS II - STANDALONE NATIVE TRAINER v1.0.4
 Target: Dungeons-WinGDK-Shipping.exe (Singleplayer / Offline)
 Direct Win32 Memory Access - Zero Debugger, Zero Watchdog Conflicts, Zero Dependencies.
 """
 
 import sys
 import time
-import struct
 import tkinter as tk
 from tkinter import ttk, messagebox
-import ctypes
-from ctypes import wintypes
 
-k32 = ctypes.windll.kernel32
-psapi = ctypes.windll.psapi
-
-# Process Memory Access Constants
-PROCESS_QUERY_INFORMATION = 0x0400
-PROCESS_VM_READ = 0x0010
-PROCESS_VM_WRITE = 0x0020
-PROCESS_VM_OPERATION = 0x0008
-PROCESS_ACCESS = PROCESS_QUERY_INFORMATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_VM_OPERATION
-
-# Pointer Chain Definitions (Base Module + GEngine 0x0B0577C8)
-CHAINS = {
-    # Currencies & Inventory (AttrSet [12] = ATR_Currency at 0x60)
-    "emeralds_current":     ['9C', '60', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "emeralds_base":        ['98', '60', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "emeralds_cap_cur":     ['AC', '60', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "emeralds_cap_base":    ['A8', '60', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-
-    # Echo Shards / SpringStone (AttrSet [12] at +0x100)
-    "springstone_current":  ['10C', '60', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "springstone_base":     ['108', '60', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "springstone_cap_cur":  ['11C', '60', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "springstone_cap_base": ['118', '60', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-
-    # Enchantment Points (AttrSet [13] = ATR_XP at 0x68)
-    "ench_points_cur":      ['DC', '68', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "ench_points_base":     ['D8', '68', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "ench_points_cap_cur":  ['FC', '68', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "ench_points_cap_base": ['F8', '68', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-
-    # Currency Gain Multipliers (AttrSet [12] = ATR_Currency at 0x60, AttrSet [11] = ATR_Soul at 0x58)
-    "emerald_increase_cur":    ['CC', '60', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "emerald_increase_base":   ['C8', '60', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "emerald_max_add_cur":     ['EC', '60', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "emerald_max_add_base":    ['E8', '60', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "emerald_drop_chance_cur": ['DC', '60', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "emerald_drop_chance_base":['D8', '60', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "soul_gather_cur":         ['DC', '58', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "soul_gather_base":        ['D8', '58', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-
-    # Combat & Souls (AttrSet [11] = ATR_Soul at 0x58)
-    "souls_current":        ['9C', '58', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "souls_base":           ['98', '58', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "souls_cap_cur":        ['AC', '58', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "souls_cap_base":       ['A8', '58', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-
-    # Arrows (Ammo, AttrSet [3] = ATR_RangedAttack at 0x18)
-    "ammo_current":         ['BC', '18', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "ammo_base":            ['B8', '18', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "ammo_max_cur":         ['CC', '18', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "ammo_max_base":        ['C8', '18', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "rapid_fire_cur":       ['9C', '18', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "rapid_fire_base":      ['98', '18', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-
-    # Survival & Combat (AttrSet [8] = ATR_Health at 0x40, AttrSet [0] = ATR_Resistance at 0x0)
-    "health_current":          ['9C', '40', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "health_max":              ['BC', '40', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "shield_current":          ['16C', '0', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "shield_max":              ['18C', '0', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "damage_resist":           ['9C', '0', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "actor_invincible":        ['5A', '2F8', '30', '0', '38', '1248'],
-    "artifact_cd":             ['9C', '20', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "artifact_cd_base":        ['98', '20', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "potion_cd":               ['13C', '40', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "potion_cd_base":          ['138', '40', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "potion_base_cd_cur":      ['12C', '40', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "potion_base_cd_base":     ['128', '40', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "potion_charges_cur":      ['16C', '40', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "potion_charges_base":     ['168', '40', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "potion_max_charges_cur":  ['17C', '40', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "potion_max_charges_base": ['178', '40', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "crit_chance":             ['21C', '38', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "crit_multiplier":         ['24C', '38', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "melee_dmg_mult":          ['1BC', '38', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "ranged_dmg_mult":         ['1CC', '38', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "player_dmg_mult_cur":      ['9C', '38', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "player_dmg_mult_base":     ['98', '38', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "melee_damage_cur":         ['AC', '38', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "melee_damage_base":        ['A8', '38', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "ranged_damage_cur":        ['EC', '38', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "ranged_damage_base":       ['E8', '38', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "artifact_damage_cur":      ['10C', '38', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "artifact_damage_base":     ['108', '38', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "melee_speed":             ['9C', '10', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "melee_reach":             ['AC', '10', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "multishot_chance":        ['13C', '18', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "multishot_count":         ['14C', '18', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-
-    # Gear Power Attributes (AttrSet [5] = ATR_ItemPower at 0x28)
-    "power_armor_cur":          ['9C', '28', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "power_armor_base":         ['98', '28', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "power_artifact0_cur":      ['CC', '28', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "power_artifact0_base":     ['C8', '28', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "power_artifact1_cur":      ['EC', '28', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "power_artifact1_base":     ['E8', '28', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "power_artifact2_cur":      ['10C', '28', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "power_artifact2_base":     ['108', '28', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "power_melee_cur":          ['12C', '28', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "power_melee_base":         ['128', '28', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "power_ranged_cur":         ['14C', '28', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "power_ranged_base":        ['148', '28', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-
-    # Movement & Physics (AttrSet [1] = ATR_Movement at 0x8)
-    "move_mult_cur":           ['AC', '8', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "move_mult_base":          ['A8', '8', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "jump_velocity":           ['1A8', '330', '2F8', '30', '0', '38', '1248'],
-    "gravity":                 ['1A0', '330', '2F8', '30', '0', '38', '1248'],
-    "roll_cd":                 ['12C', '8', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "roll_cd_base":            ['128', '8', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "roll_charges_cur":        ['14C', '8', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "roll_charges_base":       ['148', '8', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "roll_max_charges_cur":    ['15C', '8', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "roll_max_charges_base":   ['158', '8', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "time_dilation":           ['68', '2F8', '30', '0', '38', '1248'],
-
-    # Level & Progression (AttrSet [13] = ATR_XP at 0x68)
-    "level":                ['BC', '68', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "xp_current":           ['9C', '68', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "xp_needed":            ['AC', '68', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "xp_gain_mult_cur":     ['11C', '68', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "xp_gain_mult_base":    ['118', '68', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-
-    # Loot & Vendors (AttrSet [16] = ATR_Loot at 0x80, AttrSet [9] = ATR_MerchantInfo at 0x48)
-    "loot_multiplier":  ['9C', '80', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "loot_mult_base":   ['98', '80', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "max_payouts_cur":  ['AC', '80', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "max_payouts_base": ['A8', '80', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "rarity_bonus":     ['BC', '80', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "rarity_bonus_base":['B8', '80', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "drop_chance":      ['CC', '80', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "drop_chance_base": ['C8', '80', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "drop_duplication": ['DC', '80', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "drop_dup_base":    ['D8', '80', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "merchant_charges": ['9C', '48', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "merchant_upg":     ['CC', '48', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "enchantsmith_upg": ['EC', '48', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-    "blacksmith_upg":   ['10C', '48', '10A8', 'A20', '2F8', '30', '0', '38', '1248'],
-}
-
-class MemoryManager:
-    def __init__(self):
-        self.pid = None
-        self.base_addr = None
-        self.h_proc = None
-        self.blocks_addr = None
-
-    def attach(self):
-        if self.h_proc:
-            k32.CloseHandle(self.h_proc)
-            self.h_proc = None
-        self.pid = None
-        self.base_addr = None
-        self.blocks_addr = None
-
-        pids = (wintypes.DWORD * 2048)()
-        cbNeeded = wintypes.DWORD()
-        k32.K32EnumProcesses(pids, ctypes.sizeof(pids), ctypes.byref(cbNeeded))
-        num = cbNeeded.value // 4
-
-        for i in range(num):
-            pid = pids[i]
-            if pid == 0: continue
-            h = k32.OpenProcess(0x0410, False, pid)
-            if h:
-                HMODULE = ctypes.c_void_p
-                hMods = (HMODULE * 1)()
-                cb = wintypes.DWORD()
-                psapi.EnumProcessModulesEx.argtypes = [wintypes.HANDLE, ctypes.POINTER(HMODULE), wintypes.DWORD, ctypes.POINTER(wintypes.DWORD), wintypes.DWORD]
-                if psapi.EnumProcessModulesEx(h, hMods, ctypes.sizeof(hMods), ctypes.byref(cb), 3):
-                    mod_name = (ctypes.c_char * 260)()
-                    psapi.GetModuleBaseNameA(h, HMODULE(hMods[0]), mod_name, 260)
-                    if mod_name.value.decode(errors='ignore').lower() == 'dungeons-wingdk-shipping.exe':
-                        self.pid = pid
-                        self.base_addr = hMods[0]
-                        k32.CloseHandle(h)
-                        break
-                k32.CloseHandle(h)
-
-        if not self.pid:
-            return False
-
-        self.h_proc = k32.OpenProcess(PROCESS_ACCESS, False, self.pid)
-        if self.h_proc:
-            self.blocks_addr = self.base_addr + 0xade3f90
-            return True
-        return False
-
-    def resolve_chain(self, offsets_list):
-        if not self.h_proc or not self.base_addr:
-            return None
-        curr_addr = self.base_addr + 0x0B0577C8
-        buf8 = ctypes.create_string_buffer(8)
-        for off_str in reversed(offsets_list):
-            off = int(off_str, 16)
-            res = k32.ReadProcessMemory(self.h_proc, ctypes.c_void_p(curr_addr), buf8, 8, None)
-            if not res:
-                return None
-            ptr = struct.unpack('<Q', buf8.raw)[0]
-            if not ptr or ptr < 0x10000:
-                return None
-            curr_addr = ptr + off
-        return curr_addr
-
-    def read_float(self, key):
-        addr = self.resolve_chain(CHAINS[key])
-        if not addr: return None
-        buf4 = ctypes.create_string_buffer(4)
-        if k32.ReadProcessMemory(self.h_proc, ctypes.c_void_p(addr), buf4, 4, None):
-            return struct.unpack('<f', buf4.raw)[0]
-        return None
-
-    def write_float(self, key, val):
-        addr = self.resolve_chain(CHAINS[key])
-        if not addr: return False
-        buf4 = struct.pack('<f', float(val))
-        bytes_written = ctypes.c_size_t()
-        return bool(k32.WriteProcessMemory(self.h_proc, ctypes.c_void_p(addr), buf4, 4, ctypes.byref(bytes_written)))
-
-    def read_byte(self, key):
-        addr = self.resolve_chain(CHAINS[key])
-        if not addr: return None
-        buf1 = ctypes.create_string_buffer(1)
-        if k32.ReadProcessMemory(self.h_proc, ctypes.c_void_p(addr), buf1, 1, None):
-            return struct.unpack('<B', buf1.raw)[0]
-        return None
-
-    def write_byte(self, key, val):
-        addr = self.resolve_chain(CHAINS[key])
-        if not addr: return False
-        buf1 = struct.pack('<B', int(val))
-        bytes_written = ctypes.c_size_t()
-        return bool(k32.WriteProcessMemory(self.h_proc, ctypes.c_void_p(addr), buf1, 1, ctypes.byref(bytes_written)))
-
-    # Raw Memory Primitives
-    def read_ptr(self, addr):
-        if not self.h_proc or not addr: return 0
-        buf8 = ctypes.create_string_buffer(8)
-        if k32.ReadProcessMemory(self.h_proc, ctypes.c_void_p(addr), buf8, 8, None):
-            return struct.unpack('<Q', buf8.raw)[0]
-        return 0
-
-    def write_ptr(self, addr, val):
-        if not self.h_proc or not addr: return False
-        buf8 = struct.pack('<Q', int(val))
-        bytes_written = ctypes.c_size_t()
-        return bool(k32.WriteProcessMemory(self.h_proc, ctypes.c_void_p(addr), buf8, 8, ctypes.byref(bytes_written)))
-
-    def read_u32(self, addr):
-        if not self.h_proc or not addr: return 0
-        buf4 = ctypes.create_string_buffer(4)
-        if k32.ReadProcessMemory(self.h_proc, ctypes.c_void_p(addr), buf4, 4, None):
-            return struct.unpack('<I', buf4.raw)[0]
-        return 0
-
-    def write_u32(self, addr, val):
-        if not self.h_proc or not addr: return False
-        buf4 = struct.pack('<I', int(val))
-        bytes_written = ctypes.c_size_t()
-        return bool(k32.WriteProcessMemory(self.h_proc, ctypes.c_void_p(addr), buf4, 4, ctypes.byref(bytes_written)))
-
-    def read_f32(self, addr):
-        if not self.h_proc or not addr: return 0.0
-        buf4 = ctypes.create_string_buffer(4)
-        if k32.ReadProcessMemory(self.h_proc, ctypes.c_void_p(addr), buf4, 4, None):
-            return struct.unpack('<f', buf4.raw)[0]
-        return 0.0
-
-    def write_f32(self, addr, val):
-        if not self.h_proc or not addr: return False
-        buf4 = struct.pack('<f', float(val))
-        bytes_written = ctypes.c_size_t()
-        return bool(k32.WriteProcessMemory(self.h_proc, ctypes.c_void_p(addr), buf4, 4, ctypes.byref(bytes_written)))
-
-    # FName Resolver
-    def get_fname(self, comp_idx):
-        if not self.h_proc or not self.blocks_addr or not comp_idx:
-            return ""
-        block_idx = comp_idx >> 16
-        offset = comp_idx & 0xFFFF
-        buf8 = ctypes.create_string_buffer(8)
-        if not k32.ReadProcessMemory(self.h_proc, ctypes.c_void_p(self.blocks_addr + block_idx * 8), buf8, 8, None):
-            return ""
-        bptr = struct.unpack('<Q', buf8.raw)[0]
-        if not bptr:
-            return ""
-        ebuf = ctypes.create_string_buffer(256)
-        if not k32.ReadProcessMemory(self.h_proc, ctypes.c_void_p(bptr + offset * 2), ebuf, 256, None):
-            return ""
-        hdr = struct.unpack('<H', ebuf.raw[:2])[0]
-        length = min(hdr >> 6, 250)
-        return ebuf.raw[2:2+length].decode('ascii', errors='ignore')
-
-    # Inventory & Gear Operations
-    def get_equipped_gear(self):
-        pawn_addr = self.resolve_chain(['2F8', '30', '0', '38', '1248'])
-        if not pawn_addr:
-            return []
-        pawn = self.read_ptr(pawn_addr)
-        if not pawn:
-            return []
-        inv_comp = self.read_ptr(pawn + 0xda0)
-        if not inv_comp:
-            return []
-        slots_data = self.read_ptr(inv_comp + 0x158 + 0x108)
-        slots_count = self.read_u32(inv_comp + 0x158 + 0x110)
-        if not slots_data or slots_count == 0:
-            return []
-
-        equipped = []
-        for s in range(slots_count):
-            slot_addr = slots_data + s * 0x50
-            stag = self.get_fname(self.read_u32(slot_addr + 0xc))
-            if 'Equipment' in stag:
-                cnt = self.read_u32(slot_addr + 0x48)
-                idata = self.read_ptr(slot_addr + 0x40)
-                lbl = stag.replace('SW.ItemSlot.Equipment.', '')
-                if cnt > 0 and idata:
-                    itag = self.get_fname(self.read_u32(idata + 0x0)).replace('SW.Item.', '')
-                    rtag = self.get_fname(self.read_u32(idata + 0x14)).replace('SW.Rarity.', '')
-                    pwr = self.read_f32(idata + 0x60)
-                    pwr_orig = self.read_f32(idata + 0x5c)
-                    lvl = self.read_u32(idata + 0x68)
-                    xp = self.read_f32(idata + 0x6c)
-                    equipped.append({
-                        'slot_idx': s,
-                        'slot_tag': stag,
-                        'label': lbl,
-                        'item_addr': idata,
-                        'name': itag,
-                        'power': pwr,
-                        'power_orig': pwr_orig,
-                        'rarity': rtag if rtag else "None",
-                        'level': lvl,
-                        'xp': xp,
-                        'is_talisman': 'talisman' in lbl.lower()
-                    })
-        return equipped
-
-    def set_gear_power(self, item_addr, slot_tag, power_val):
-        power_val = float(power_val)
-        self.write_f32(item_addr + 0x5c, power_val)
-        self.write_f32(item_addr + 0x60, power_val)
-        if 'MeleeWeapon' in slot_tag:
-            self.write_float("power_melee_base", power_val)
-            self.write_float("power_melee_cur", power_val)
-        elif 'RangedWeapon' in slot_tag:
-            self.write_float("power_ranged_base", power_val)
-            self.write_float("power_ranged_cur", power_val)
-        elif 'Armor' in slot_tag:
-            self.write_float("power_armor_base", power_val)
-            self.write_float("power_armor_cur", power_val)
-        elif 'Artifact.Slot1' in slot_tag:
-            self.write_float("power_artifact0_base", power_val)
-            self.write_float("power_artifact0_cur", power_val)
-        elif 'Artifact.Slot2' in slot_tag:
-            self.write_float("power_artifact1_base", power_val)
-            self.write_float("power_artifact1_cur", power_val)
-        elif 'Artifact.Slot3' in slot_tag:
-            self.write_float("power_artifact2_base", power_val)
-            self.write_float("power_artifact2_cur", power_val)
-        return True
-
-    RARITY_INDICES = {
-        "Common": 5234547,
-        "Rare": 5234580,
-        "Special": 5234598,
-        "Unique": 5234598
-    }
-
-    def set_gear_rarity(self, item_addr, rarity_name):
-        idx = self.RARITY_INDICES.get(rarity_name)
-        if idx:
-            return self.write_u32(item_addr + 0x14, idx)
-        return False
-
-    def set_talisman_level_xp(self, item_addr, level, xp):
-        self.write_u32(item_addr + 0x68, int(level))
-        self.write_f32(item_addr + 0x6c, float(xp))
-        return True
-
-    def max_out_talismans(self, only_equipped=True):
-        items = self.get_equipped_gear()
-        count = 0
-        for it in items:
-            if it['is_talisman']:
-                addr = it['item_addr']
-                self.write_u32(addr + 0x68, 2)
-                self.write_f32(addr + 0x6c, 100000.0)
-                count += 1
-        if not only_equipped:
-            pawn_addr = self.resolve_chain(['2F8', '30', '0', '38', '1248'])
-            if pawn_addr:
-                pawn = self.read_ptr(pawn_addr)
-                if pawn:
-                    inv_comp = self.read_ptr(pawn + 0xda0)
-                    if inv_comp:
-                        slots_data = self.read_ptr(inv_comp + 0x158 + 0x108)
-                        slots_count = self.read_u32(inv_comp + 0x158 + 0x110)
-                        if slots_data and slots_count > 7:
-                            slot7 = slots_data + 7 * 0x50
-                            cnt = self.read_u32(slot7 + 0x48)
-                            idata = self.read_ptr(slot7 + 0x40)
-                            inv_entry_size = 0xd8
-                            for i in range(cnt):
-                                t_addr = idata + i * inv_entry_size
-                                self.write_u32(t_addr + 0x68, 2)
-                                self.write_f32(t_addr + 0x6c, 100000.0)
-                                count += 1
-        return count
+from trainer_offsets import CHAINS, ENGINE_OFFSET, FNAMES_BLOCKS_OFFSET, RARITY_INDICES
+from trainer_memory import MemoryManager, MemoryAccessError, finite_float
 
 
 class TrainerApp(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("Minecraft Dungeons II - Native Trainer v1.0.3")
+        self.title("Minecraft Dungeons II - Native Trainer v1.0.4")
         self.geometry("940x800")
         self.minsize(880, 720)
         self.configure(bg="#181825")
@@ -461,7 +51,16 @@ class TrainerApp(tk.Tk):
         self.create_widgets()
 
         self.try_connect()
-        self.after(500, self.refresh_loop)
+        self._refresh_job = self.after(500, self.refresh_loop)
+
+    def destroy(self):
+        if hasattr(self, '_refresh_job') and self._refresh_job:
+            try:
+                self.after_cancel(self._refresh_job)
+                self._refresh_job = None
+            except Exception:
+                pass
+        super().destroy()
 
     def setup_styles(self):
         style = ttk.Style(self)
@@ -488,7 +87,7 @@ class TrainerApp(tk.Tk):
         top_bar = tk.Frame(self, bg="#181825", padx=16, pady=10)
         top_bar.pack(fill='x')
 
-        title_lbl = tk.Label(top_bar, text="MINECRAFT DUNGEONS II - NATIVE TRAINER v1.0.3", font=('Segoe UI', 13, 'bold'), bg="#181825", fg="#89b4fa")
+        title_lbl = tk.Label(top_bar, text="MINECRAFT DUNGEONS II - NATIVE TRAINER v1.0.4", font=('Segoe UI', 13, 'bold'), bg="#181825", fg="#89b4fa")
         title_lbl.pack(side='left')
 
         self.status_lbl = tk.Label(top_bar, text="Searching for game process...", font=('Segoe UI', 9, 'bold'), bg="#181825", fg="#f38ba8")
@@ -523,7 +122,7 @@ class TrainerApp(tk.Tk):
             self.status_lbl.config(text=f"Attached: Dungeons-WinGDK-Shipping.exe (PID {self.mem.pid})", fg="#a6e3a1")
             self.refresh_gear_table()
         else:
-            self.status_lbl.config(text="Game not found (Waiting for Dungeons-WinGDK-Shipping.exe)", fg="#f38ba8")
+            self.status_lbl.config(text=self.mem.last_error, fg="#f38ba8")
 
     # ==========================================
     # Tab 1: Currencies (Emeralds, Echo Shards, Enchantment Points with Freeze, and Gain Mult)
@@ -1573,7 +1172,8 @@ class TrainerApp(tk.Tk):
         return (lbl_val, key, is_byte)
 
     def refresh_loop(self):
-        if not self.mem.h_proc:
+        if not self.mem.is_alive():
+            self.status_lbl.config(text=self.mem.last_error, fg="#f38ba8")
             self.try_connect()
 
         if self.mem.h_proc:
@@ -1658,7 +1258,7 @@ class TrainerApp(tk.Tk):
                         else:
                             lbl.config(text="---")
 
-        self.after(250, self.refresh_loop)
+        self._refresh_job = self.after(250, self.refresh_loop)
 
 if __name__ == "__main__":
     app = TrainerApp()

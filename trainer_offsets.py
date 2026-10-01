@@ -1,0 +1,150 @@
+"""
+Minecraft Dungeons II - Trainer Pointer Chains & Offset Definitions
+Target: Dungeons-WinGDK-Shipping.exe (Singleplayer / Offline)
+"""
+
+ENGINE_OFFSET = 0x0B0577C8
+FNAMES_BLOCKS_OFFSET = 0xADE3F90
+
+# Pointer chains: Base address + ENGINE_OFFSET -> chained pointer dereferences
+CHAINS = {
+    # Network / Session Authority
+    "player_role":             ["5F", "2F8", "30", "0", "38", "1248"],
+    "player_remote_role":      ["60", "2F8", "30", "0", "38", "1248"],
+
+    # Currencies & Inventory (AttrSet [12] = ATR_Currency at 0x60)
+    "emeralds_current":        ["9C", "60", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "emeralds_base":           ["98", "60", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "emeralds_cap_cur":        ["AC", "60", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "emeralds_cap_base":       ["A8", "60", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+
+    # Echo Shards / SpringStone (AttrSet [12] at +0x100)
+    "springstone_current":     ["10C", "60", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "springstone_base":        ["108", "60", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "springstone_cap_cur":     ["11C", "60", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "springstone_cap_base":    ["118", "60", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+
+    # Enchantment Points (AttrSet [13] = ATR_XP at 0x68)
+    "ench_points_cur":         ["DC", "68", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "ench_points_base":        ["D8", "68", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "ench_points_max_cur":     ["EC", "68", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "ench_points_max_base":    ["E8", "68", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "ench_points_cap_cur":     ["FC", "68", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "ench_points_cap_base":    ["F8", "68", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+
+    # Currency Gain Multipliers (AttrSet [12] = ATR_Currency at 0x60, AttrSet [11] = ATR_Soul at 0x58)
+    "emerald_increase_cur":    ["CC", "60", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "emerald_increase_base":   ["C8", "60", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "emerald_max_add_cur":     ["EC", "60", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "emerald_max_add_base":    ["E8", "60", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "emerald_drop_chance_cur": ["DC", "60", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "emerald_drop_chance_base":["D8", "60", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "soul_gather_cur":         ["DC", "58", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "soul_gather_base":        ["D8", "58", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+
+    # Combat & Souls (AttrSet [11] = ATR_Soul at 0x58)
+    "souls_current":           ["9C", "58", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "souls_base":              ["98", "58", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "souls_cap_cur":           ["AC", "58", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "souls_cap_base":          ["A8", "58", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+
+    # Arrows (Ammo, AttrSet [3] = ATR_RangedAttack at 0x18)
+    "ammo_current":            ["BC", "18", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "ammo_base":               ["B8", "18", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "ammo_max_cur":            ["CC", "18", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "ammo_max_base":           ["C8", "18", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "rapid_fire_cur":          ["9C", "18", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "rapid_fire_base":         ["98", "18", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+
+    # Survival & Combat (AttrSet [8] = ATR_Health at 0x40, AttrSet [0] = ATR_Resistance at 0x0)
+    "health_current":          ["9C", "40", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "health_max":              ["BC", "40", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "shield_current":          ["16C", "0", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "shield_max":              ["18C", "0", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "damage_resist":           ["9C", "0", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "actor_invincible":        ["5A", "2F8", "30", "0", "38", "1248"],
+    "artifact_cd":             ["9C", "20", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "artifact_cd_base":        ["98", "20", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "potion_cd":               ["13C", "40", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "potion_cd_base":          ["138", "40", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "potion_base_cd_cur":      ["12C", "40", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "potion_base_cd_base":     ["128", "40", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "potion_charges_cur":      ["16C", "40", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "potion_charges_base":     ["168", "40", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "potion_max_charges_cur":  ["17C", "40", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "potion_max_charges_base": ["178", "40", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "crit_chance":             ["21C", "38", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "crit_multiplier":         ["24C", "38", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "melee_dmg_mult":          ["1BC", "38", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "ranged_dmg_mult":         ["1CC", "38", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "player_dmg_mult_cur":     ["9C", "38", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "player_dmg_mult_base":    ["98", "38", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "melee_damage_cur":        ["AC", "38", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "melee_damage_base":       ["A8", "38", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "ranged_damage_cur":       ["EC", "38", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "ranged_damage_base":      ["E8", "38", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "artifact_damage_cur":     ["10C", "38", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "artifact_damage_base":    ["108", "38", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "melee_speed":             ["9C", "10", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "melee_reach":             ["AC", "10", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "multishot_chance":        ["13C", "18", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "multishot_count":         ["14C", "18", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+
+    # Gear Power Attributes (AttrSet [5] = ATR_ItemPower at 0x28)
+    "power_armor_cur":         ["9C", "28", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "power_armor_base":        ["98", "28", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "power_artifact0_cur":     ["CC", "28", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "power_artifact0_base":    ["C8", "28", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "power_artifact1_cur":     ["EC", "28", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "power_artifact1_base":    ["E8", "28", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "power_artifact2_cur":     ["10C", "28", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "power_artifact2_base":    ["108", "28", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "power_melee_cur":         ["12C", "28", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "power_melee_base":        ["128", "28", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "power_ranged_cur":        ["14C", "28", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "power_ranged_base":       ["148", "28", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+
+    # Movement & Physics (AttrSet [1] = ATR_Movement at 0x8)
+    "move_mult_cur":           ["AC", "8", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "move_mult_base":          ["A8", "8", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "jump_velocity":           ["1A8", "330", "2F8", "30", "0", "38", "1248"],
+    "gravity":                 ["1A0", "330", "2F8", "30", "0", "38", "1248"],
+    "roll_cd":                 ["12C", "8", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "roll_cd_base":            ["128", "8", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "roll_charges_cur":        ["14C", "8", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "roll_charges_base":       ["148", "8", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "roll_max_charges_cur":    ["15C", "8", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "roll_max_charges_base":   ["158", "8", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "time_dilation":           ["68", "2F8", "30", "0", "38", "1248"],
+
+    # Level & Progression (AttrSet [13] = ATR_XP at 0x68)
+    "level":                   ["BC", "68", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "level_base":              ["B8", "68", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "xp_current":              ["9C", "68", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "xp_needed":               ["AC", "68", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "xp_gain_mult_cur":        ["11C", "68", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "xp_gain_mult_base":       ["118", "68", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+
+    # Loot & Vendors (AttrSet [16] = ATR_Loot at 0x80, AttrSet [9] = ATR_MerchantInfo at 0x48)
+    "loot_multiplier":         ["9C", "80", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "loot_mult_base":          ["98", "80", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "max_payouts_cur":         ["AC", "80", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "max_payouts_base":        ["A8", "80", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "rarity_bonus":            ["BC", "80", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "rarity_bonus_base":       ["B8", "80", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "drop_chance":             ["CC", "80", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "drop_chance_base":        ["C8", "80", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "drop_duplication":        ["DC", "80", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "drop_dup_base":           ["D8", "80", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "merchant_charges":        ["9C", "48", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "merchant_upg":            ["CC", "48", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "enchantsmith_upg":        ["EC", "48", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+    "blacksmith_upg":          ["10C", "48", "10A8", "A20", "2F8", "30", "0", "38", "1248"],
+}
+
+RARITY_INDICES = {
+    "Common": 5234547,
+    "Rare": 5234580,
+    "Special": 5234598,
+    "Unique": 5234598,
+}
