@@ -5,15 +5,13 @@ Usage: python -m unittest -v test_trainer.py
 """
 
 import ctypes
-import math
 import os
-import struct
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
-import trainer_offsets as offsets
-import trainer_memory as memory
 import trainer_gui as gui
+import trainer_memory as memory
+import trainer_offsets as offsets
 
 
 class OffsetsTests(unittest.TestCase):
@@ -61,10 +59,13 @@ class MemoryManagerUnitTests(unittest.TestCase):
         self.root_ptr = ctypes.c_uint64(ctypes.addressof(self.middle_buf))
         self.mem.base_addr = ctypes.addressof(self.root_ptr) - offsets.ENGINE_OFFSET
 
-        self.test_chains = patch.dict(offsets.CHAINS, {
-            "test_float": ["10", "8"],
-            "test_byte": ["20", "8"],
-        })
+        self.test_chains = patch.dict(
+            offsets.CHAINS,
+            {
+                "test_float": ["10", "8"],
+                "test_byte": ["20", "8"],
+            },
+        )
         self.test_chains.start()
 
     def tearDown(self):
@@ -95,7 +96,10 @@ class MemoryManagerUnitTests(unittest.TestCase):
         # Simulate terminated process
         with patch.object(memory.k32, "GetExitCodeProcess", return_value=True) as mock_exit:
             code = ctypes.wintypes.DWORD(0)
-            mock_exit.side_effect = lambda h, ptr: (ctypes.memmove(ptr, ctypes.byref(code), 4), True)[1]
+            mock_exit.side_effect = lambda h, ptr: (
+                ctypes.memmove(ptr, ctypes.byref(code), 4),
+                True,
+            )[1]
             self.assertFalse(self.mem.is_alive())
             self.assertIsNone(self.mem.h_proc)
 
@@ -132,8 +136,10 @@ class MemoryManagerUnitTests(unittest.TestCase):
 class GuiAndFeaturesTests(unittest.TestCase):
     def setUp(self):
         # Create headless Tkinter app without spawning real process or loop
-        with patch.object(memory.MemoryManager, "attach", return_value=False), \
-             patch.object(gui.TrainerApp, "refresh_loop"):
+        with (
+            patch.object(memory.MemoryManager, "attach", return_value=False),
+            patch.object(gui.TrainerApp, "refresh_loop"),
+        ):
             self.app = gui.TrainerApp()
             self.app.withdraw()  # Do not display window during automated testing
 
@@ -141,8 +147,12 @@ class GuiAndFeaturesTests(unittest.TestCase):
         self.app.destroy()
 
     def test_all_tabs_created(self):
-        tab_titles = [self.app.notebook.tab(i, "text") for i in range(len(self.app.notebook.tabs()))]
-        self.assertEqual(tab_titles, ["Currencies", "Combat", "Movement", "Progression", "Gear & Talismans"])
+        tab_titles = [
+            self.app.notebook.tab(i, "text") for i in range(len(self.app.notebook.tabs()))
+        ]
+        self.assertEqual(
+            tab_titles, ["Currencies", "Combat", "Movement", "Progression", "Gear & Talismans"]
+        )
         self.assertNotIn("Developer", tab_titles)
 
     def test_currency_freeze_toggles(self):
@@ -240,27 +250,31 @@ class GuiAndFeaturesTests(unittest.TestCase):
 
     def test_gear_operations_dispatch(self):
         self.app.mem.h_proc = 123  # Simulated process handle
-        mock_gear = [{
-            "slot_idx": 23,
-            "slot_tag": "SW.ItemSlot.Equipment.Talisman1",
-            "label": "Talisman1",
-            "item_addr": 0x1000,
-            "name": "HealthBoost",
-            "power": 10.0,
-            "power_orig": 10.0,
-            "rarity": "Special",
-            "level": 1,
-            "xp": 500.0,
-            "is_talisman": True
-        }]
+        mock_gear = [
+            {
+                "slot_idx": 23,
+                "slot_tag": "SW.ItemSlot.Equipment.Talisman1",
+                "label": "Talisman1",
+                "item_addr": 0x1000,
+                "name": "HealthBoost",
+                "power": 10.0,
+                "power_orig": 10.0,
+                "rarity": "Special",
+                "level": 1,
+                "xp": 500.0,
+                "is_talisman": True,
+            }
+        ]
         with patch.object(self.app.mem, "get_equipped_gear", return_value=mock_gear):
             self.app.refresh_gear_table()
             items = self.app.gear_tree.get_children()
             self.assertEqual(len(items), 1)
 
             # Test max out talismans routine without blocking modal dialog
-            with patch.object(self.app.mem, "max_out_talismans", return_value=1) as mock_max, \
-                 patch.object(gui.messagebox, "showinfo") as mock_box:
+            with (
+                patch.object(self.app.mem, "max_out_talismans", return_value=1) as mock_max,
+                patch.object(gui.messagebox, "showinfo") as mock_box,
+            ):
                 self.app.max_out_equipped_talismans()
                 mock_max.assert_called_with(only_equipped=True)
                 mock_box.assert_called_once()
@@ -279,10 +293,11 @@ class GuiAndFeaturesTests(unittest.TestCase):
             mock_wf.assert_any_call("xp_gain_mult_cur", 25.0)
 
     def test_gear_power_and_rarity_methods(self):
-        with patch.object(self.app.mem, "write_f32") as mock_wf32, \
-             patch.object(self.app.mem, "write_float") as mock_wf, \
-             patch.object(self.app.mem, "write_u32") as mock_wu32:
-
+        with (
+            patch.object(self.app.mem, "write_f32") as mock_wf32,
+            patch.object(self.app.mem, "write_float") as mock_wf,
+            patch.object(self.app.mem, "write_u32") as mock_wu32,
+        ):
             # Melee power
             self.app.mem.set_gear_power(0x2000, "SW.ItemSlot.Equipment.MeleeWeapon", 150.0)
             mock_wf32.assert_any_call(0x2000 + 0x60, 150.0)
