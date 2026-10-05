@@ -43,7 +43,6 @@ class TrainerApp(tk.Tk):
         self.talisman_growth_mult = 1.0
         self.last_talisman_xp = {}
         self.selected_gear_item = None
-        self._reconnect_ticks = 0
         self._orig_health_max = None
         self._orig_shield_max = None
 
@@ -1820,12 +1819,7 @@ class TrainerApp(tk.Tk):
     def refresh_loop(self):
         if not self.mem.is_alive():
             self.status_lbl.config(text=self.mem.last_error, fg="#f38ba8")
-            self._reconnect_ticks += 1
-            if self._reconnect_ticks >= 4:
-                self._reconnect_ticks = 0
-                self.try_connect()
-        else:
-            self._reconnect_ticks = 0
+            self.try_connect()
 
         if self.mem.h_proc:
             # Continuous locks

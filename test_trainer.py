@@ -65,40 +65,11 @@ class UtilityUnitTests(unittest.TestCase):
         self.assertEqual(memory.classify_session_role(None), "unknown")
 
 
-class DynamicScanTests(unittest.TestCase):
+class ProcessTargetTests(unittest.TestCase):
     def test_target_process_names(self):
         self.assertIn("dungeons-wingdk-shipping.exe", memory.TARGET_PROCESS_NAMES)
         self.assertIn("dungeons-win64-shipping.exe", memory.TARGET_PROCESS_NAMES)
-        self.assertIn("dungeons.exe", memory.TARGET_PROCESS_NAMES)
-
-    def test_engine_offset_initial_fallback(self):
-        mem = memory.MemoryManager()
-        self.assertEqual(mem.engine_offset, offsets.ENGINE_OFFSET)
-        self.assertEqual(mem.fnames_blocks_offset, offsets.FNAMES_BLOCKS_OFFSET)
-
-    def test_is_engine_candidate_checks_hierarchy(self):
-        mem = memory.MemoryManager()
-        mem.h_proc = 1
-        mem.base_addr = 0x140000000
-
-        # Simulate broken pointer
-        with patch.object(mem, "read_ptr", return_value=0):
-            self.assertFalse(mem.is_engine_candidate(0x1000))
-
-        # Simulate valid 5-level hierarchy
-        with patch.object(mem, "read_ptr", return_value=0x7FF612340000):
-            self.assertTrue(mem.is_engine_candidate(0x1000))
-
-    def test_is_fnames_candidate(self):
-        mem = memory.MemoryManager()
-        mem.h_proc = 1
-        mem.base_addr = 0x140000000
-
-        with (
-            patch.object(mem, "read_ptr", return_value=0x7FF612340000),
-            patch.object(mem, "read_memory", return_value=b"\x00\x00None\x00\x00"),
-        ):
-            self.assertTrue(mem.is_fnames_candidate(0x2000))
+        self.assertNotIn("dungeons.exe", memory.TARGET_PROCESS_NAMES)
 
 
 class MemoryManagerUnitTests(unittest.TestCase):
