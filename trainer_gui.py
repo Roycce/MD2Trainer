@@ -44,6 +44,8 @@ class TrainerApp(tk.Tk):
         self.last_talisman_xp = {}
         self.selected_gear_item = None
         self._reconnect_ticks = 0
+        self._orig_health_max = None
+        self._orig_shield_max = None
 
         self.setup_styles()
         self.create_widgets()
@@ -841,16 +843,30 @@ class TrainerApp(tk.Tk):
         self.god_mode_active = not self.god_mode_active
         if self.god_mode_active:
             self.btn_god.config(text="GOD MODE: ACTIVE (IMMUNE)", bg="#a6e3a1", fg="#11111b")
+            cur_h = self.mem.read_float("health_max")
+            if cur_h and cur_h < 1000000.0:
+                self._orig_health_max = cur_h
+            cur_s = self.mem.read_float("shield_max")
+            if cur_s and cur_s < 1000000.0:
+                self._orig_shield_max = cur_s
             self.apply_god_mode()
         else:
             self.btn_god.config(text="TOGGLE GOD MODE (OFF)", bg="#313244", fg="#f38ba8")
+            orig_h = self._orig_health_max or 100.0
+            orig_s = self._orig_shield_max or 100.0
+            self.mem.write_float("health_max", orig_h)
+            self.mem.write_float("health_current", orig_h)
+            self.mem.write_float("shield_max", orig_s)
+            self.mem.write_float("shield_current", orig_s)
             self.mem.write_float("damage_resist", 1.0)
             self.mem.write_byte("actor_invincible", 116)
 
     def apply_god_mode(self):
-        h_max = self.mem.read_float("health_max") or 100.0
-        self.mem.write_float("health_current", h_max)
-        self.mem.write_float("shield_current", 100.0)
+        god_hp = 50000000.0
+        self.mem.write_float("health_max", god_hp)
+        self.mem.write_float("health_current", god_hp)
+        self.mem.write_float("shield_max", god_hp)
+        self.mem.write_float("shield_current", god_hp)
         self.mem.write_float("damage_resist", 0.0)
         self.mem.write_byte("actor_invincible", 112)
 

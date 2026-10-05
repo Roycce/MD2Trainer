@@ -187,8 +187,8 @@ class MemoryManager:
 
         self.h_proc = k32.OpenProcess(PROCESS_ACCESS, False, self.pid)
         if self.h_proc:
-            self.engine_offset = self.find_engine_offset()
-            self.fnames_blocks_offset = self.find_fnames_offset()
+            self.engine_offset = ENGINE_OFFSET
+            self.fnames_blocks_offset = FNAMES_BLOCKS_OFFSET
             self.blocks_addr = self.base_addr + self.fnames_blocks_offset
             return True
         else:
