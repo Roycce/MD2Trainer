@@ -43,6 +43,7 @@ class TrainerApp(tk.Tk):
         self.talisman_growth_mult = 1.0
         self.last_talisman_xp = {}
         self.selected_gear_item = None
+        self._reconnect_ticks = 0
 
         self.setup_styles()
         self.create_widgets()
@@ -177,8 +178,10 @@ class TrainerApp(tk.Tk):
 
     def try_connect(self):
         if self.mem.attach():
+            eng_str = f"0x{self.mem.engine_offset:X}" if self.mem.engine_offset else "N/A"
             self.status_lbl.config(
-                text=f"Attached: Dungeons-WinGDK-Shipping.exe (PID {self.mem.pid})", fg="#a6e3a1"
+                text=f"Attached: {self.mem.process_name} (PID {self.mem.pid}) [GEngine: {eng_str}]",
+                fg="#a6e3a1",
             )
             self.refresh_gear_table()
         else:
@@ -1801,7 +1804,12 @@ class TrainerApp(tk.Tk):
     def refresh_loop(self):
         if not self.mem.is_alive():
             self.status_lbl.config(text=self.mem.last_error, fg="#f38ba8")
-            self.try_connect()
+            self._reconnect_ticks += 1
+            if self._reconnect_ticks >= 4:
+                self._reconnect_ticks = 0
+                self.try_connect()
+        else:
+            self._reconnect_ticks = 0
 
         if self.mem.h_proc:
             # Continuous locks
@@ -1853,12 +1861,8 @@ class TrainerApp(tk.Tk):
                                 self.mem.write_f32(addr + 0x6C, new_xp)
                                 cur_xp = new_xp
                         self.last_talisman_xp[addr] = cur_xp
-            else:
-                equipped = self.mem.get_equipped_gear()
-                for it in equipped:
-                    if it["is_talisman"]:
-                        addr = it["item_addr"]
-                        self.last_talisman_xp[addr] = self.mem.read_f32(addr + 0x6C)
+            elif self.last_talisman_xp:
+                self.last_talisman_xp.clear()
 
             # Update numeric labels across tabs
             for tab_rows in [

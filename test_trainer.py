@@ -6,8 +6,9 @@ Usage: python -m unittest -v test_trainer.py
 
 import ctypes
 import os
+import sys
 import unittest
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import trainer_gui as gui
 import trainer_memory as memory
@@ -43,8 +44,67 @@ class OffsetsTests(unittest.TestCase):
         self.assertEqual(offsets.RARITY_INDICES["Special"], 5234598)
 
 
+class UtilityUnitTests(unittest.TestCase):
+    def test_finite_float_validation(self):
+        self.assertEqual(memory.finite_float(10.5), 10.5)
+        self.assertEqual(memory.finite_float("42.0"), 42.0)
+        with self.assertRaises(ValueError):
+            memory.finite_float(float("inf"))
+        with self.assertRaises(ValueError):
+            memory.finite_float(float("-inf"))
+        with self.assertRaises(ValueError):
+            memory.finite_float(float("nan"))
+        with self.assertRaises(ValueError):
+            memory.finite_float(1e40)
+
+    def test_classify_session_role(self):
+        self.assertEqual(memory.classify_session_role(3), "local")
+        self.assertEqual(memory.classify_session_role(2), "client")
+        self.assertEqual(memory.classify_session_role(1), "client")
+        self.assertEqual(memory.classify_session_role(0), "unknown")
+        self.assertEqual(memory.classify_session_role(None), "unknown")
+
+
+class DynamicScanTests(unittest.TestCase):
+    def test_target_process_names(self):
+        self.assertIn("dungeons-wingdk-shipping.exe", memory.TARGET_PROCESS_NAMES)
+        self.assertIn("dungeons-win64-shipping.exe", memory.TARGET_PROCESS_NAMES)
+        self.assertIn("dungeons.exe", memory.TARGET_PROCESS_NAMES)
+
+    def test_engine_offset_initial_fallback(self):
+        mem = memory.MemoryManager()
+        self.assertEqual(mem.engine_offset, offsets.ENGINE_OFFSET)
+        self.assertEqual(mem.fnames_blocks_offset, offsets.FNAMES_BLOCKS_OFFSET)
+
+    def test_is_engine_candidate_checks_hierarchy(self):
+        mem = memory.MemoryManager()
+        mem.h_proc = 1
+        mem.base_addr = 0x140000000
+
+        # Simulate broken pointer
+        with patch.object(mem, "read_ptr", return_value=0):
+            self.assertFalse(mem.is_engine_candidate(0x1000))
+
+        # Simulate valid 5-level hierarchy
+        with patch.object(mem, "read_ptr", return_value=0x7FF612340000):
+            self.assertTrue(mem.is_engine_candidate(0x1000))
+
+    def test_is_fnames_candidate(self):
+        mem = memory.MemoryManager()
+        mem.h_proc = 1
+        mem.base_addr = 0x140000000
+
+        with (
+            patch.object(mem, "read_ptr", return_value=0x7FF612340000),
+            patch.object(mem, "read_memory", return_value=b"\x00\x00None\x00\x00"),
+        ):
+            self.assertTrue(mem.is_fnames_candidate(0x2000))
+
+
 class MemoryManagerUnitTests(unittest.TestCase):
     def setUp(self):
+        if sys.platform != "win32":
+            self.skipTest("Win32 native memory tests require Windows")
         self.mem = memory.MemoryManager()
         # Open handle to current test process for safe, non-destructive Win32 pointer chain testing
         self.mem.h_proc = memory.k32.OpenProcess(memory.PROCESS_ACCESS, False, os.getpid())
@@ -71,25 +131,6 @@ class MemoryManagerUnitTests(unittest.TestCase):
     def tearDown(self):
         self.test_chains.stop()
         self.mem.close()
-
-    def test_finite_float_validation(self):
-        self.assertEqual(memory.finite_float(10.5), 10.5)
-        self.assertEqual(memory.finite_float("42.0"), 42.0)
-        with self.assertRaises(ValueError):
-            memory.finite_float(float("inf"))
-        with self.assertRaises(ValueError):
-            memory.finite_float(float("-inf"))
-        with self.assertRaises(ValueError):
-            memory.finite_float(float("nan"))
-        with self.assertRaises(ValueError):
-            memory.finite_float(1e40)
-
-    def test_classify_session_role(self):
-        self.assertEqual(memory.classify_session_role(3), "local")
-        self.assertEqual(memory.classify_session_role(2), "client")
-        self.assertEqual(memory.classify_session_role(1), "client")
-        self.assertEqual(memory.classify_session_role(0), "unknown")
-        self.assertEqual(memory.classify_session_role(None), "unknown")
 
     def test_is_alive_current_process(self):
         self.assertTrue(self.mem.is_alive())
@@ -136,9 +177,11 @@ class MemoryManagerUnitTests(unittest.TestCase):
 class GuiAndFeaturesTests(unittest.TestCase):
     def setUp(self):
         # Create headless Tkinter app without spawning real process or loop
+        mock_loop = MagicMock()
+        mock_loop.__name__ = "refresh_loop"
         with (
             patch.object(memory.MemoryManager, "attach", return_value=False),
-            patch.object(gui.TrainerApp, "refresh_loop"),
+            patch.object(gui.TrainerApp, "refresh_loop", mock_loop),
         ):
             self.app = gui.TrainerApp()
             self.app.withdraw()  # Do not display window during automated testing

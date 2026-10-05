@@ -5,7 +5,9 @@ Target: Dungeons-WinGDK-Shipping.exe (Singleplayer / Offline)
 
 import ctypes
 import math
+import re
 import struct
+import sys
 from ctypes import wintypes
 
 from trainer_offsets import (
@@ -15,58 +17,77 @@ from trainer_offsets import (
     RARITY_INDICES,
 )
 
-k32 = ctypes.windll.kernel32
-psapi = ctypes.windll.psapi
-
-# Process Memory Access Constants
-PROCESS_QUERY_INFORMATION = 0x0400
-PROCESS_VM_READ = 0x0010
-PROCESS_VM_WRITE = 0x0020
-PROCESS_VM_OPERATION = 0x0008
-PROCESS_ACCESS = (
-    PROCESS_QUERY_INFORMATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_VM_OPERATION
+TARGET_PROCESS_NAMES = (
+    "dungeons-wingdk-shipping.exe",
+    "dungeons-win64-shipping.exe",
+    "dungeons.exe",
 )
 
-# Win32 API Function Signatures
-k32.CloseHandle.argtypes = [wintypes.HANDLE]
-k32.CloseHandle.restype = wintypes.BOOL
+if sys.platform == "win32":
+    k32 = ctypes.windll.kernel32
+    psapi = ctypes.windll.psapi
 
-k32.K32EnumProcesses.argtypes = [
-    ctypes.POINTER(wintypes.DWORD),
-    wintypes.DWORD,
-    ctypes.POINTER(wintypes.DWORD),
-]
-k32.K32EnumProcesses.restype = wintypes.BOOL
+    # Process Memory Access Constants
+    PROCESS_QUERY_INFORMATION = 0x0400
+    PROCESS_VM_READ = 0x0010
+    PROCESS_VM_WRITE = 0x0020
+    PROCESS_VM_OPERATION = 0x0008
+    PROCESS_ACCESS = (
+        PROCESS_QUERY_INFORMATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_VM_OPERATION
+    )
 
-k32.GetExitCodeProcess.argtypes = [wintypes.HANDLE, ctypes.POINTER(wintypes.DWORD)]
-k32.GetExitCodeProcess.restype = wintypes.BOOL
+    # Win32 API Function Signatures
+    k32.CloseHandle.argtypes = [wintypes.HANDLE]
+    k32.CloseHandle.restype = wintypes.BOOL
 
-for api in (k32.ReadProcessMemory, k32.WriteProcessMemory):
-    api.argtypes = [
-        wintypes.HANDLE,
-        ctypes.c_void_p,
-        ctypes.c_void_p,
-        ctypes.c_size_t,
-        ctypes.POINTER(ctypes.c_size_t),
+    k32.K32EnumProcesses.argtypes = [
+        ctypes.POINTER(wintypes.DWORD),
+        wintypes.DWORD,
+        ctypes.POINTER(wintypes.DWORD),
     ]
-    api.restype = wintypes.BOOL
+    k32.K32EnumProcesses.restype = wintypes.BOOL
 
-psapi.EnumProcessModulesEx.argtypes = [
-    wintypes.HANDLE,
-    ctypes.POINTER(wintypes.HMODULE),
-    wintypes.DWORD,
-    ctypes.POINTER(wintypes.DWORD),
-    wintypes.DWORD,
-]
-psapi.EnumProcessModulesEx.restype = wintypes.BOOL
+    k32.GetExitCodeProcess.argtypes = [wintypes.HANDLE, ctypes.POINTER(wintypes.DWORD)]
+    k32.GetExitCodeProcess.restype = wintypes.BOOL
 
-psapi.GetModuleBaseNameA.argtypes = [
-    wintypes.HANDLE,
-    wintypes.HMODULE,
-    ctypes.POINTER(ctypes.c_char),
-    wintypes.DWORD,
-]
-psapi.GetModuleBaseNameA.restype = wintypes.DWORD
+    for api in (k32.ReadProcessMemory, k32.WriteProcessMemory):
+        api.argtypes = [
+            wintypes.HANDLE,
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            ctypes.c_size_t,
+            ctypes.POINTER(ctypes.c_size_t),
+        ]
+        api.restype = wintypes.BOOL
+
+    psapi.EnumProcessModulesEx.argtypes = [
+        wintypes.HANDLE,
+        ctypes.POINTER(wintypes.HMODULE),
+        wintypes.DWORD,
+        ctypes.POINTER(wintypes.DWORD),
+        wintypes.DWORD,
+    ]
+    psapi.EnumProcessModulesEx.restype = wintypes.BOOL
+
+    psapi.GetModuleBaseNameA.argtypes = [
+        wintypes.HANDLE,
+        wintypes.HMODULE,
+        ctypes.POINTER(ctypes.c_char),
+        wintypes.DWORD,
+    ]
+    psapi.GetModuleBaseNameA.restype = wintypes.DWORD
+else:
+    from unittest.mock import MagicMock
+
+    k32 = MagicMock()
+    psapi = MagicMock()
+    PROCESS_QUERY_INFORMATION = 0x0400
+    PROCESS_VM_READ = 0x0010
+    PROCESS_VM_WRITE = 0x0020
+    PROCESS_VM_OPERATION = 0x0008
+    PROCESS_ACCESS = (
+        PROCESS_QUERY_INFORMATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_VM_OPERATION
+    )
 
 
 class MemoryAccessError(RuntimeError):
@@ -94,10 +115,13 @@ class MemoryManager:
 
     def __init__(self):
         self.pid = None
+        self.process_name = "Dungeons-WinGDK-Shipping.exe"
         self.base_addr = None
         self.h_proc = None
         self.blocks_addr = None
-        self.last_error = "Game not found. Waiting for Dungeons-WinGDK-Shipping.exe..."
+        self.engine_offset = ENGINE_OFFSET
+        self.fnames_blocks_offset = FNAMES_BLOCKS_OFFSET
+        self.last_error = "Game not found. Waiting for game process..."
 
     def close(self):
         if self.h_proc:
@@ -106,6 +130,8 @@ class MemoryManager:
         self.pid = None
         self.base_addr = None
         self.blocks_addr = None
+        self.engine_offset = ENGINE_OFFSET
+        self.fnames_blocks_offset = FNAMES_BLOCKS_OFFSET
 
     def is_alive(self):
         if not self.h_proc:
@@ -119,7 +145,7 @@ class MemoryManager:
 
     def attach(self):
         self.close()
-        self.last_error = "Game not found. Waiting for Dungeons-WinGDK-Shipping.exe..."
+        self.last_error = "Game not found. Waiting for game process..."
         bytes_needed = wintypes.DWORD()
         capacity = 2048
         while True:
@@ -147,11 +173,10 @@ class MemoryManager:
                 if psapi.EnumProcessModulesEx(h, mods, ctypes.sizeof(mods), ctypes.byref(cb), 3):
                     mod_name = (ctypes.c_char * 260)()
                     psapi.GetModuleBaseNameA(h, mods[0], mod_name, 260)
-                    if (
-                        mod_name.value.decode(errors="ignore").lower()
-                        == "dungeons-wingdk-shipping.exe"
-                    ):
+                    proc_str = mod_name.value.decode(errors="ignore")
+                    if proc_str.lower() in TARGET_PROCESS_NAMES:
                         self.pid = pid
+                        self.process_name = proc_str
                         self.base_addr = mods[0]
                         break
             finally:
@@ -162,11 +187,14 @@ class MemoryManager:
 
         self.h_proc = k32.OpenProcess(PROCESS_ACCESS, False, self.pid)
         if self.h_proc:
-            self.blocks_addr = self.base_addr + FNAMES_BLOCKS_OFFSET
+            self.engine_offset = self.find_engine_offset()
+            self.fnames_blocks_offset = self.find_fnames_offset()
+            self.blocks_addr = self.base_addr + self.fnames_blocks_offset
             return True
         else:
             self.last_error = (
-                f"Process found, but access denied (Windows error {ctypes.get_last_error()})."
+                f"Process found ({self.process_name}), but access denied (Windows error {ctypes.get_last_error()}). "
+                f"Try running as Administrator."
             )
             self.close()
             return False
@@ -196,10 +224,207 @@ class MemoryManager:
             and bytes_written.value == len(data)
         )
 
+    def is_engine_candidate(self, cand_offset):
+        """
+        Verify if a given RVA offset in the main module points to a valid GEngine instance.
+        Validates the 5-level pointer hierarchy:
+        GEngine -> GameInstance (+0x1248) -> LocalPlayers (+0x38) -> LocalPlayer (+0x0) -> PlayerController (+0x30)
+        """
+        if not self.h_proc or not self.base_addr or not cand_offset:
+            return False
+        # 1. GEngine pointer
+        gengine = self.read_ptr(self.base_addr + cand_offset)
+        if not (0x10000 <= gengine <= 0x7FFFFFFFFFFF):
+            return False
+        # 2. GameInstance pointer (+0x1248)
+        game_instance = self.read_ptr(gengine + 0x1248)
+        if not (0x10000 <= game_instance <= 0x7FFFFFFFFFFF):
+            return False
+        # 3. LocalPlayers pointer (+0x38)
+        local_players = self.read_ptr(game_instance + 0x38)
+        if not (0x10000 <= local_players <= 0x7FFFFFFFFFFF):
+            return False
+        # 4. LocalPlayer[0] pointer (+0x0)
+        local_player = self.read_ptr(local_players + 0x0)
+        if not (0x10000 <= local_player <= 0x7FFFFFFFFFFF):
+            return False
+        # 5. PlayerController pointer (+0x30)
+        player_controller = self.read_ptr(local_player + 0x30)
+        if not (0x10000 <= player_controller <= 0x7FFFFFFFFFFF):
+            return False
+        return True
+
+    def is_fnames_candidate(self, cand_offset):
+        """Verify if a given RVA offset points to a valid FNamePool.Blocks table."""
+        if not self.h_proc or not self.base_addr or not cand_offset:
+            return False
+        block0 = self.read_ptr(self.base_addr + cand_offset)
+        if not (0x10000 <= block0 <= 0x7FFFFFFFFFFF):
+            return False
+        chunk_hdr = self.read_memory(block0, 32)
+        if not chunk_hdr:
+            return False
+        if b"None" in chunk_hdr or b"ByteProperty" in chunk_hdr:
+            return True
+        hdr = struct.unpack("<H", chunk_hdr[:2])[0]
+        length = min(hdr >> 6, 250)
+        if 1 <= length <= 64:
+            text = chunk_hdr[2 : 2 + length]
+            if all(32 <= b < 127 for b in text):
+                return True
+        return False
+
+    def get_module_sections(self):
+        """Parse PE headers to locate .text, .data, and other sections."""
+        sections = []
+        dos_hdr = self.read_memory(self.base_addr, 0x40)
+        if not dos_hdr or dos_hdr[:2] != b"MZ":
+            return sections
+        e_lfanew = struct.unpack("<I", dos_hdr[0x3C:0x40])[0]
+        nt_hdr = self.read_memory(self.base_addr + e_lfanew, 0x108)
+        if not nt_hdr or nt_hdr[:4] != b"PE\x00\x00":
+            return sections
+        num_sections = struct.unpack("<H", nt_hdr[6:8])[0]
+        size_opt = struct.unpack("<H", nt_hdr[20:22])[0]
+        sec_start = self.base_addr + e_lfanew + 24 + size_opt
+        sec_raw = self.read_memory(sec_start, num_sections * 40)
+        if not sec_raw:
+            return sections
+        for i in range(num_sections):
+            chunk = sec_raw[i * 40 : (i + 1) * 40]
+            name = chunk[:8].rstrip(b"\x00").decode("latin1", errors="ignore")
+            vsize, vrva = struct.unpack("<II", chunk[8:16])
+            sections.append({"name": name, "rva": vrva, "size": vsize})
+        return sections
+
+    def find_engine_offset(self):
+        """Dynamically detect GEngine offset by testing candidate chains, AOB scanning, and data section inspection."""
+        if self.is_engine_candidate(ENGINE_OFFSET):
+            return ENGINE_OFFSET
+
+        sections = self.get_module_sections()
+        text_secs = [s for s in sections if s["name"].lower() in (".text", "code")]
+        if not text_secs and sections:
+            text_secs = [sections[0]]
+
+        patterns = [
+            # Pattern 1: Accessing GameInstance (0x1248) from GEngine
+            re.compile(
+                b"\x48\x8b[\x05\x0d\x15\x1d\x25\x2d\x35\x3d](.{4})\x48\x8b[\x80-\xbf]\x48\x12\x00\x00"
+            ),
+            # Pattern 2: GEngine check
+            re.compile(b"\x48\x8b\x0d(.{4})\x48\x85\xc9\x74"),
+            # Pattern 3: GEngine mov cs:GEngine, rax
+            re.compile(b"\x48\x89\x05(.{4})\x48\x85"),
+        ]
+
+        chunk_size = 2 * 1024 * 1024
+        for sec in text_secs:
+            sec_rva = sec["rva"]
+            sec_size = sec["size"]
+            offset = 0
+            while offset < sec_size:
+                read_len = min(chunk_size, sec_size - offset)
+                chunk = self.read_memory(self.base_addr + sec_rva + offset, read_len)
+                if not chunk:
+                    break
+                for pat in patterns:
+                    for match in pat.finditer(chunk):
+                        rel32 = struct.unpack("<i", match.group(1))[0]
+                        cand_rva = sec_rva + offset + match.start() + 7 + rel32
+                        if self.is_engine_candidate(cand_rva):
+                            return cand_rva
+                if read_len < chunk_size:
+                    break
+                offset += chunk_size - 32
+
+        # Direct search in data sections (.data / .bss)
+        data_secs = [s for s in sections if s["name"].lower() in (".data", ".bss")]
+        for sec in data_secs:
+            sec_rva = sec["rva"]
+            sec_size = sec["size"]
+            offset = 0
+            while offset < sec_size:
+                read_len = min(chunk_size, sec_size - offset)
+                chunk = self.read_memory(self.base_addr + sec_rva + offset, read_len)
+                if not chunk:
+                    break
+                for idx in range(0, len(chunk) - 7, 8):
+                    ptr = struct.unpack_from("<Q", chunk, idx)[0]
+                    if 0x10000 <= ptr <= 0x7FFFFFFFFFFF:
+                        cand_rva = sec_rva + offset + idx
+                        if self.is_engine_candidate(cand_rva):
+                            return cand_rva
+                if read_len < chunk_size:
+                    break
+                offset += chunk_size
+
+        return ENGINE_OFFSET
+
+    def find_fnames_offset(self):
+        """Dynamically detect FNamePool.Blocks offset."""
+        if self.is_fnames_candidate(FNAMES_BLOCKS_OFFSET):
+            return FNAMES_BLOCKS_OFFSET
+
+        sections = self.get_module_sections()
+        text_secs = [s for s in sections if s["name"].lower() in (".text", "code")]
+        if not text_secs and sections:
+            text_secs = [sections[0]]
+
+        patterns = [
+            re.compile(b"\x48\x8d\x0d(.{4})\xe8.{4}\x4c\x8b"),
+            re.compile(b"\x48\x8d\x05(.{4})\xeb"),
+            re.compile(b"\x48\x8d\x0d(.{4})\x49\x63"),
+            re.compile(b"\x48\x8d\x0d(.{4})\xe8"),
+        ]
+
+        chunk_size = 2 * 1024 * 1024
+        for sec in text_secs:
+            sec_rva = sec["rva"]
+            sec_size = sec["size"]
+            offset = 0
+            while offset < sec_size:
+                read_len = min(chunk_size, sec_size - offset)
+                chunk = self.read_memory(self.base_addr + sec_rva + offset, read_len)
+                if not chunk:
+                    break
+                for pat in patterns:
+                    for match in pat.finditer(chunk):
+                        rel32 = struct.unpack("<i", match.group(1))[0]
+                        cand_rva = sec_rva + offset + match.start() + 7 + rel32
+                        if self.is_fnames_candidate(cand_rva):
+                            return cand_rva
+                if read_len < chunk_size:
+                    break
+                offset += chunk_size - 32
+
+        # Direct search in data sections
+        data_secs = [s for s in sections if s["name"].lower() in (".data", ".rdata")]
+        for sec in data_secs:
+            sec_rva = sec["rva"]
+            sec_size = sec["size"]
+            offset = 0
+            while offset < sec_size:
+                read_len = min(chunk_size, sec_size - offset)
+                chunk = self.read_memory(self.base_addr + sec_rva + offset, read_len)
+                if not chunk:
+                    break
+                for idx in range(0, len(chunk) - 7, 8):
+                    ptr = struct.unpack_from("<Q", chunk, idx)[0]
+                    if 0x10000 <= ptr <= 0x7FFFFFFFFFFF:
+                        cand_rva = sec_rva + offset + idx
+                        if self.is_fnames_candidate(cand_rva):
+                            return cand_rva
+                if read_len < chunk_size:
+                    break
+                offset += chunk_size
+
+        return FNAMES_BLOCKS_OFFSET
+
     def resolve_chain(self, offsets_list):
         if not self.h_proc or not self.base_addr:
             return None
-        curr_addr = self.base_addr + ENGINE_OFFSET
+        curr_addr = self.base_addr + self.engine_offset
         buf8 = ctypes.create_string_buffer(8)
         transferred = ctypes.c_size_t()
         for off_str in reversed(offsets_list):
