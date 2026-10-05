@@ -28,6 +28,11 @@ class OffsetsTests(unittest.TestCase):
         self.assertIn("xp_gain_mult_cur", offsets.CHAINS)
         self.assertIn("power_melee_cur", offsets.CHAINS)
         self.assertIn("health_current", offsets.CHAINS)
+        self.assertIn("health_base", offsets.CHAINS)
+        self.assertIn("health_max_base", offsets.CHAINS)
+        self.assertIn("shield_base", offsets.CHAINS)
+        self.assertIn("shield_max_base", offsets.CHAINS)
+        self.assertIn("damage_resist_base", offsets.CHAINS)
 
         for key, chain in offsets.CHAINS.items():
             self.assertIsInstance(chain, list, f"{key} chain must be a list")

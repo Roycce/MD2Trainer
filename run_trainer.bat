@@ -2,6 +2,14 @@
 title Minecraft Dungeons II - Standalone Native Trainer
 cd /d "%~dp0"
 
+:: Request Administrator privileges (required for WindowsApps / WinGDK memory writes)
+net session >nul 2>&1
+if %errorlevel% neq 0 (
+    echo [INFO] Requesting Administrator privileges to attach to game process...
+    powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process -Verb RunAs -FilePath '%~f0'"
+    exit /b
+)
+
 python --version >nul 2>nul
 if %errorlevel% equ 0 (
     python trainer_gui.py

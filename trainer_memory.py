@@ -24,8 +24,10 @@ TARGET_PROCESS_NAMES = (
 if sys.platform == "win32":
     k32 = ctypes.windll.kernel32
     psapi = ctypes.windll.psapi
+    advapi32 = ctypes.windll.advapi32
 
     # Process Memory Access Constants
+    PROCESS_ALL_ACCESS = 0x1FFFFF
     PROCESS_QUERY_INFORMATION = 0x0400
     PROCESS_VM_READ = 0x0010
     PROCESS_VM_WRITE = 0x0020
@@ -35,6 +37,9 @@ if sys.platform == "win32":
     )
 
     # Win32 API Function Signatures
+    k32.GetCurrentProcess.argtypes = []
+    k32.GetCurrentProcess.restype = wintypes.HANDLE
+
     k32.CloseHandle.argtypes = [wintypes.HANDLE]
     k32.CloseHandle.restype = wintypes.BOOL
 
@@ -58,6 +63,15 @@ if sys.platform == "win32":
         ]
         api.restype = wintypes.BOOL
 
+    k32.VirtualProtectEx.argtypes = [
+        wintypes.HANDLE,
+        ctypes.c_void_p,
+        ctypes.c_size_t,
+        wintypes.DWORD,
+        ctypes.POINTER(wintypes.DWORD),
+    ]
+    k32.VirtualProtectEx.restype = wintypes.BOOL
+
     psapi.EnumProcessModulesEx.argtypes = [
         wintypes.HANDLE,
         ctypes.POINTER(wintypes.HMODULE),
@@ -79,6 +93,8 @@ else:
 
     k32 = MagicMock()
     psapi = MagicMock()
+    advapi32 = MagicMock()
+    PROCESS_ALL_ACCESS = 0x1FFFFF
     PROCESS_QUERY_INFORMATION = 0x0400
     PROCESS_VM_READ = 0x0010
     PROCESS_VM_WRITE = 0x0020
@@ -108,6 +124,55 @@ def classify_session_role(role):
     return "unknown"
 
 
+def enable_debug_privilege():
+    """Acquire SeDebugPrivilege in current process token (required for WinGDK / AppContainer write access)."""
+    if sys.platform != "win32":
+        return True
+    try:
+        token_adjust = 0x0020
+        token_query = 0x0008
+        se_privilege_enabled = 0x00000002
+
+        h_token = wintypes.HANDLE()
+        if not advapi32.OpenProcessToken(
+            k32.GetCurrentProcess(),
+            token_adjust | token_query,
+            ctypes.byref(h_token),
+        ):
+            return False
+
+        try:
+            class LUID(ctypes.Structure):
+                _fields_ = [("LowPart", wintypes.DWORD), ("HighPart", wintypes.LONG)]
+
+            class LUID_AND_ATTRIBUTES(ctypes.Structure):
+                _fields_ = [("Luid", LUID), ("Attributes", wintypes.DWORD)]
+
+            class TOKEN_PRIVILEGES(ctypes.Structure):
+                _fields_ = [
+                    ("PrivilegeCount", wintypes.DWORD),
+                    ("Privileges", LUID_AND_ATTRIBUTES * 1),
+                ]
+
+            luid = LUID()
+            if not advapi32.LookupPrivilegeValueW(None, "SeDebugPrivilege", ctypes.byref(luid)):
+                return False
+
+            tp = TOKEN_PRIVILEGES()
+            tp.PrivilegeCount = 1
+            tp.Privileges[0].Luid = luid
+            tp.Privileges[0].Attributes = se_privilege_enabled
+
+            res = advapi32.AdjustTokenPrivileges(
+                h_token, False, ctypes.byref(tp), ctypes.sizeof(tp), None, None
+            )
+            return bool(res and ctypes.get_last_error() == 0)
+        finally:
+            k32.CloseHandle(h_token)
+    except Exception:
+        return False
+
+
 class MemoryManager:
     """Manages process attachment, memory reads/writes, pointer chains, and game structures."""
 
@@ -120,6 +185,7 @@ class MemoryManager:
         self.engine_offset = ENGINE_OFFSET
         self.fnames_blocks_offset = FNAMES_BLOCKS_OFFSET
         self.last_error = "Game not found. Waiting for game process..."
+        self.last_write_error = None
 
     def close(self):
         if self.h_proc:
@@ -130,6 +196,7 @@ class MemoryManager:
         self.blocks_addr = None
         self.engine_offset = ENGINE_OFFSET
         self.fnames_blocks_offset = FNAMES_BLOCKS_OFFSET
+        self.last_write_error = None
 
     def is_alive(self):
         if not self.h_proc:
@@ -144,6 +211,7 @@ class MemoryManager:
     def attach(self):
         self.close()
         self.last_error = "Game not found. Waiting for game process..."
+        enable_debug_privilege()
         bytes_needed = wintypes.DWORD()
         capacity = 2048
         while True:
@@ -183,11 +251,15 @@ class MemoryManager:
         if not self.pid:
             return False
 
-        self.h_proc = k32.OpenProcess(PROCESS_ACCESS, False, self.pid)
+        self.h_proc = k32.OpenProcess(PROCESS_ALL_ACCESS, False, self.pid)
+        if not self.h_proc:
+            self.h_proc = k32.OpenProcess(PROCESS_ACCESS, False, self.pid)
+
         if self.h_proc:
             self.engine_offset = ENGINE_OFFSET
             self.fnames_blocks_offset = FNAMES_BLOCKS_OFFSET
             self.blocks_addr = self.base_addr + self.fnames_blocks_offset
+            self.last_write_error = None
             return True
         else:
             self.last_error = (
@@ -214,13 +286,55 @@ class MemoryManager:
     def write_memory(self, address, data):
         if not self.h_proc or not address:
             return False
+        size = len(data)
+        old_protect = wintypes.DWORD()
+        unprotected = False
+
+        if sys.platform == "win32":
+            # 0x40 = PAGE_EXECUTE_READWRITE
+            if k32.VirtualProtectEx(
+                self.h_proc,
+                ctypes.c_void_p(address),
+                ctypes.c_size_t(size),
+                0x40,
+                ctypes.byref(old_protect),
+            ):
+                unprotected = True
+
         bytes_written = ctypes.c_size_t()
-        return bool(
-            k32.WriteProcessMemory(
-                self.h_proc, ctypes.c_void_p(address), data, len(data), ctypes.byref(bytes_written)
-            )
-            and bytes_written.value == len(data)
+        buf = (
+            (ctypes.c_char * size).from_buffer_copy(data)
+            if isinstance(data, (bytes, bytearray))
+            else data
         )
+        res = k32.WriteProcessMemory(
+            self.h_proc,
+            ctypes.c_void_p(address),
+            buf,
+            ctypes.c_size_t(size),
+            ctypes.byref(bytes_written),
+        )
+
+        if unprotected and sys.platform == "win32":
+            k32.VirtualProtectEx(
+                self.h_proc,
+                ctypes.c_void_p(address),
+                ctypes.c_size_t(size),
+                old_protect.value,
+                ctypes.byref(old_protect),
+            )
+
+        success = bool(res and bytes_written.value == size)
+        if not success:
+            err = ctypes.get_last_error() if sys.platform == "win32" else 0
+            self.last_write_error = f"Write error at 0x{address:X} (Code {err})"
+            print(
+                f"[ERROR] Write failed at 0x{address:X}: res={res}, "
+                f"written={bytes_written.value}/{size}, Win32 Error {err}"
+            )
+        else:
+            self.last_write_error = None
+        return success
 
     def resolve_chain(self, offsets_list):
         if not self.h_proc or not self.base_addr:

@@ -853,28 +853,42 @@ class TrainerApp(tk.Tk):
             self.btn_god.config(text="TOGGLE GOD MODE (OFF)", bg="#313244", fg="#f38ba8")
             orig_h = self._orig_health_max or 100.0
             orig_s = self._orig_shield_max or 100.0
+            self.mem.write_float("health_max_base", orig_h)
             self.mem.write_float("health_max", orig_h)
+            self.mem.write_float("health_base", orig_h)
             self.mem.write_float("health_current", orig_h)
+            self.mem.write_float("shield_max_base", orig_s)
             self.mem.write_float("shield_max", orig_s)
+            self.mem.write_float("shield_base", orig_s)
             self.mem.write_float("shield_current", orig_s)
+            self.mem.write_float("damage_resist_base", 1.0)
             self.mem.write_float("damage_resist", 1.0)
             self.mem.write_byte("actor_invincible", 116)
 
     def apply_god_mode(self):
         god_hp = 50000000.0
+        self.mem.write_float("health_max_base", god_hp)
         self.mem.write_float("health_max", god_hp)
+        self.mem.write_float("health_base", god_hp)
         self.mem.write_float("health_current", god_hp)
+        self.mem.write_float("shield_max_base", god_hp)
         self.mem.write_float("shield_max", god_hp)
+        self.mem.write_float("shield_base", god_hp)
         self.mem.write_float("shield_current", god_hp)
+        self.mem.write_float("damage_resist_base", 0.0)
         self.mem.write_float("damage_resist", 0.0)
         self.mem.write_byte("actor_invincible", 112)
 
     def full_heal(self):
         h_max = self.mem.read_float("health_max") or 100.0
+        self.mem.write_float("health_base", h_max)
         self.mem.write_float("health_current", h_max)
 
     def set_health(self, val):
+        val = float(val)
+        self.mem.write_float("health_max_base", val)
         self.mem.write_float("health_max", val)
+        self.mem.write_float("health_base", val)
         self.mem.write_float("health_current", val)
 
     def enable_multishot(self):
@@ -1820,6 +1834,17 @@ class TrainerApp(tk.Tk):
         if not self.mem.is_alive():
             self.status_lbl.config(text=self.mem.last_error, fg="#f38ba8")
             self.try_connect()
+        elif self.mem.last_write_error:
+            self.status_lbl.config(
+                text=f"{self.mem.last_write_error} (Run as Admin!)",
+                fg="#f38ba8",
+            )
+        else:
+            eng_str = f"0x{self.mem.engine_offset:X}" if self.mem.engine_offset else "N/A"
+            self.status_lbl.config(
+                text=f"Attached: {self.mem.process_name} (PID {self.mem.pid}) [GEngine: {eng_str}]",
+                fg="#a6e3a1",
+            )
 
         if self.mem.h_proc:
             # Continuous locks
